@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
     @Service
-    class usuarioServicioImpl implements usuarioServicio {
+    class UsuarioServicioImpl implements usuarioServicio {
 
         @Override
         public List<UsuarioDTO> listarTodos(String nombre, String ciudad) {
