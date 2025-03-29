@@ -8,7 +8,6 @@ import java.util.List;
     @Service
     class usuarioServicioImpl implements usuarioServicio {
 
-
         @Override
         public List<UsuarioDTO> listarTodos(String nombre, String ciudad) {
             return List.of();

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="MongoDBSettings">
+    <option name="serverConnections">
+      <set>
+        <ServerConnectionSetting>
+          <option name="authenticationMethod" value="NONE" />
+          <option name="name" value="proyectoAvanzada" />
+          <option name="serverUrls">
+            <list>
+              <option value="localhost:27017" />
+            </list>
+          </option>
+          <option name="sshTunnelingConfiguration">
+            <SshTunnelingConfiguration />
+          </option>
+          <option name="tlsSslConnection" value="DEFAULT" />
+          <option name="uuid" value="3ffef2d5-dd9f-4f3c-9b21-5f28652d747a" />
+        </ServerConnectionSetting>
+      </set>
+    </option>
+  </component>
+</project>

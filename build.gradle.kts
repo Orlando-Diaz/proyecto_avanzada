@@ -32,6 +32,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb") // mongoDB
+    implementation ("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0") // swagger
 }
 
 tasks.withType<Test> {
