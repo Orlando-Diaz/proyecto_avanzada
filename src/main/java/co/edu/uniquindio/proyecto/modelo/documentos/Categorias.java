@@ -1,4 +1,4 @@
-package co.edu.uniquindio.proyecto.modelo.Documentos;
+package co.edu.uniquindio.proyecto.modelo.documentos;
 
 
 import org.bson.types.ObjectId;
