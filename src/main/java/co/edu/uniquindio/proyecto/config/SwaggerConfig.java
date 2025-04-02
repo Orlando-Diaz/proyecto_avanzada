@@ -1,4 +1,4 @@
-package co.edu.uniquindio.proyecto.swagger;
+package co.edu.uniquindio.proyecto.config;
 
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;

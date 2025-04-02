@@ -1,4 +1,4 @@
-package co.edu.uniquindio.proyecto.servicios;
+package co.edu.uniquindio.proyecto.servicios.interfaces;
 
 import co.edu.uniquindio.proyecto.dto.CrearUsuarioDTO;
 import co.edu.uniquindio.proyecto.dto.EditarUsuarioDTO;
