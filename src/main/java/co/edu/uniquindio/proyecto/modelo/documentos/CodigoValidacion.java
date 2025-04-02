@@ -1,0 +1,18 @@
+package co.edu.uniquindio.proyecto.modelo.documentos;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@Document("codigos de validacion")
+public class CodigoValidacion {
+
+    private LocalDateTime fecha;
+    private String codigo;
+}
