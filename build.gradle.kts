@@ -35,6 +35,12 @@ dependencies {
     implementation ("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0") // swagger
     implementation("org.mapstruct:mapstruct:1.5.5.Final")
     annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
+    implementation("io.jsonwebtoken:jjwt:0.11.5")
+    implementation("io.jsonwebtoken:jjwt-api:0.11.5")
+    implementation("io.jsonwebtoken:jjwt-impl:0.11.5")
+    implementation("io.jsonwebtoken:jjwt-jackson:0.11.5") // Para compatibilidad con JSON
+    implementation ("io.jsonwebtoken:jjwt:0.10.7")
+
 }
 
 tasks.withType<Test> {
