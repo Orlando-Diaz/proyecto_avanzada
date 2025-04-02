@@ -3,10 +3,7 @@ package co.edu.uniquindio.proyecto.modelo.documentos;
 import co.edu.uniquindio.proyecto.modelo.enums.Ciudad;
 import co.edu.uniquindio.proyecto.modelo.enums.EstadoUsuario;
 import co.edu.uniquindio.proyecto.modelo.enums.Rol;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -20,6 +17,7 @@ import java.time.LocalDateTime;
 public class Usuario {
 
     @Id
+    @EqualsAndHashCode.Include
     private ObjectId id;
 
     private String nombre;

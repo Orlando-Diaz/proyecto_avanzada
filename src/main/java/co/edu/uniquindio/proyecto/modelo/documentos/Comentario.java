@@ -1,8 +1,6 @@
 package co.edu.uniquindio.proyecto.modelo.documentos;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -16,11 +14,18 @@ import java.time.LocalDateTime;
 public class Comentario {
 
     @Id
-    private ObjectId reporteId;
+    @EqualsAndHashCode.Include
+    private ObjectId id;
     private String mensaje;
     private LocalDateTime fecha;
-
-    @Id
-    private ObjectId id;
     private ObjectId clienteId;
+
+    @Builder
+    public Comentario(String mensaje, LocalDateTime fecha, ObjectId id, ObjectId clienteId) {
+        this.mensaje = mensaje;
+        this.fecha = fecha;
+        this.id = id;
+        this.clienteId = clienteId;
+        this.id = new ObjectId();
+    }
 }
