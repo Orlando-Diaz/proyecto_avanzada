@@ -1,4 +1,4 @@
-package co.edu.uniquindio.proyecto.modelo.Enums;
+package co.edu.uniquindio.proyecto.modelo.enums;
 
 public enum EstadoUsuario {
 
