@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-@Service
+
 public interface ReporteServicio {
 
     public static void crearReporte(ReporteDTO reporte) throws Exception{

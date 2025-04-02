@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController
-@RequestMapping("api/reportes")
+@RestController()
+@RequestMapping("/api/reportes")
 public class ReporteControlador {
 
     public final ReporteServicio reporteServivio;

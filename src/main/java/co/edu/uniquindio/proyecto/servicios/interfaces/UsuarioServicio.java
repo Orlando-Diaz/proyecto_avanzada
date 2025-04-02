@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-@Service
+
 public interface UsuarioServicio {
 
     public static void crear(CrearUsuarioDTO cuenta) throws Exception{
