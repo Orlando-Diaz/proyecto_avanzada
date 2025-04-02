@@ -40,6 +40,8 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-impl:0.11.5")
     implementation("io.jsonwebtoken:jjwt-jackson:0.11.5") // Para compatibilidad con JSON
     implementation ("io.jsonwebtoken:jjwt:0.10.7")
+    implementation("com.google.firebase:firebase-admin:9.2.0")
+
 
 }
 
