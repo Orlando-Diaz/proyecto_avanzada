@@ -1,4 +1,4 @@
-package co.edu.uniquindio.proyecto.Repositorios;
+package co.edu.uniquindio.proyecto.repositorios;
 
 import org.springframework.stereotype.Repository;
 

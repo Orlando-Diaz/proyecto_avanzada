@@ -33,6 +33,8 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb") // mongoDB
     implementation ("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.5.0") // swagger
+    implementation("org.mapstruct:mapstruct:1.5.5.Final")
+    annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
 }
 
 tasks.withType<Test> {

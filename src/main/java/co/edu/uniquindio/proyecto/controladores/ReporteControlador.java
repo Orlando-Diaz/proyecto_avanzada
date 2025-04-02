@@ -2,7 +2,7 @@ package co.edu.uniquindio.proyecto.controladores;
 
 import co.edu.uniquindio.proyecto.dto.MensajeDTO;
 import co.edu.uniquindio.proyecto.dto.ReporteDTO;
-import co.edu.uniquindio.proyecto.servicios.ReporteServicio;
+import co.edu.uniquindio.proyecto.servicios.interfaces.ReporteServicio;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
