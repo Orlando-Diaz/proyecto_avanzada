@@ -11,6 +11,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document("categorias")
 public class Categoria {
 
+
     @Id
     @EqualsAndHashCode.Include
     private ObjectId id;
