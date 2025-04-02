@@ -1,17 +1,11 @@
 package co.edu.uniquindio.proyecto.servicios.Impl;
-import co.edu.uniquindio.proyecto.dto.UsuarioDTO;
-import co.edu.uniquindio.proyecto.servicios.usuarioServicio;
-import co.edu.uniquindio.proyecto.servicios.usuarioServicio;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import java.util.List;
 
-    @Service
-    class UsuarioServicioImpl implements usuarioServicio {
+@Service
+@RequiredArgsConstructor
+public class UsuarioServicioImpl  {
 
-        @Override
-        public List<UsuarioDTO> listarTodos(String nombre, String ciudad) {
-            return List.of();
-        }
-    }
-
+}
 
