@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-@Document("notificaciones")
+@Document("notificacion")
 public class Notificacion {
 
     @Id

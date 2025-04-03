@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-@Document("comentarios")
+@Document("comentario")
 public class Comentario {
 
     @Id

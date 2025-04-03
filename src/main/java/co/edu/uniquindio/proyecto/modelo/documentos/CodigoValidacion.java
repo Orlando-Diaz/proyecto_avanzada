@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-@Document("codigos de validacion")
+@Document("codigoValidacion")
 public class CodigoValidacion {
 
     private LocalDateTime fecha;

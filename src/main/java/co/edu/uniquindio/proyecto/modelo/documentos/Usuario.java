@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@ToString
 @NoArgsConstructor
 @Document("usuarios")
 public class Usuario {
@@ -29,6 +30,9 @@ public class Usuario {
     private Rol rol;
     private EstadoUsuario estado;
     private LocalDateTime fechaRegistro;
+
+    private String codigoValidacion;
+
 
     @Builder
     public Usuario(String nombre, Ciudad ciudad, String direccion, String email, String telefono, String password, Rol rol, EstadoUsuario estado, LocalDateTime fechaRegistro) {
