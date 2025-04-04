@@ -1,14 +1,13 @@
 package co.edu.uniquindio.proyecto.servicios.Impl;
 
-import co.edu.uniquindio.proyecto.dto.CrearUsuarioDTO;
-import co.edu.uniquindio.proyecto.dto.EditarUsuarioDTO;
-import co.edu.uniquindio.proyecto.dto.UsuarioDTO;
+import co.edu.uniquindio.proyecto.dto.*;
 import co.edu.uniquindio.proyecto.mapper.UsuarioMapper;
 import co.edu.uniquindio.proyecto.modelo.documentos.Usuario;
 import co.edu.uniquindio.proyecto.modelo.enums.Ciudad;
 import co.edu.uniquindio.proyecto.modelo.enums.EstadoUsuario;
 import co.edu.uniquindio.proyecto.modelo.enums.Rol;
 import co.edu.uniquindio.proyecto.repositorios.UsuarioRepo;
+import co.edu.uniquindio.proyecto.servicios.interfaces.EmailServicio;
 import co.edu.uniquindio.proyecto.servicios.interfaces.UsuarioServicio;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
@@ -18,6 +17,8 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.stereotype.Service;
 
 import org.springframework.data.mongodb.core.query.Query;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -29,6 +30,7 @@ public class UsuarioServicioImpl implements UsuarioServicio {
     private final UsuarioRepo usuarioRepo;
     private final UsuarioMapper usuarioMapper;
     private final MongoTemplate mongoTemplate;
+    private final EmailServicio emailServicio;
 
     @Override
     public void crear(CrearUsuarioDTO crearUsuarioDTO) throws Exception {
@@ -66,29 +68,23 @@ public class UsuarioServicioImpl implements UsuarioServicio {
     }
 
     @Override
-    public void editar(EditarUsuarioDTO editarUsuarioDTO) throws Exception {
-
-        //Validamos el id
-        if (!ObjectId.isValid(editarUsuarioDTO.id())) {
-            throw new Exception("No se encontró el usuario con el id "+editarUsuarioDTO.id());
+    public void editar(String id, EditarUsuarioDTO cuentaDTO) throws Exception {
+        // Validar ID
+        if (!ObjectId.isValid(id)) {
+            throw new Exception("ID inválido");
         }
 
-        //Buscamos el usuario que se quiere actualizar
-        ObjectId objectId = new ObjectId(editarUsuarioDTO.id());
-        Optional<Usuario> usuarioOptional = usuarioRepo.findById(objectId);
+        // Buscar usuario
+        Usuario usuario = usuarioRepo.findById(new ObjectId(id))
+                .orElseThrow(() -> new Exception("Usuario no encontrado"));
 
-        //Si no se encontró el usuario, lanzamos una excepción
-        if(usuarioOptional.isEmpty()){
-            throw new Exception("No se encontró el usuario con el id "+editarUsuarioDTO.id());
-        }
+        // Actualizar campos desde el DTO
+        usuario.setNombre(cuentaDTO.nombre());
+        usuario.setCiudad(cuentaDTO.ciudad());
+        usuario.setDireccion(cuentaDTO.direccion());
+        usuario.setTelefono(cuentaDTO.telefono());
 
-        // Mapear los datos actualizados al usuario existente
-        Usuario usuario = usuarioOptional.get();
-        usuarioMapper.toDocument(editarUsuarioDTO, usuario);
-
-        //Como el objeto usuario ya tiene un id, el save() no crea un nuevo registro sino que actualiza el que ya existe
         usuarioRepo.save(usuario);
-
     }
 
 
