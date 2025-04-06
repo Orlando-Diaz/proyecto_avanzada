@@ -1,8 +1,10 @@
 package co.edu.uniquindio.proyecto.controladores;
 
 import co.edu.uniquindio.proyecto.dto.*;
+import co.edu.uniquindio.proyecto.modelo.documentos.HistorialReporte;
 import co.edu.uniquindio.proyecto.servicios.interfaces.ReporteServicio;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Tag(name = "Reportes", description = "Gestión de reportes")
 @RestController
@@ -74,5 +77,33 @@ public class ReporteControlador {
             @PathVariable String idReporte) throws Exception {
         List<ComentarioDTO> comentarios = reporteServicio.listarComentarios(idReporte);
         return ResponseEntity.ok().body(new MensajeDTO<>(false, comentarios));
+    }
+
+    /*
+    HISTORIAL DE CAMBIOS DE UN REPORTE
+     */
+
+    @Operation(
+            summary = "Obtener historial de cambios",
+            description = "Muestra los cambios realizados en un reporte"
+    )
+    @GetMapping("/{id}/historial")
+    public ResponseEntity<List<HistorialReporteDTO>> obtenerHistorial(
+            @PathVariable String id) throws Exception {
+
+        List<HistorialReporteDTO> historial = reporteServicio.obtenerHistorial(id);
+        return ResponseEntity.ok(historial);
+    }
+
+    @Operation(summary = "Actualizar parcialmente un reporte")
+    @PatchMapping("/{id}")
+    public ResponseEntity<MensajeDTO<String>> actualizarParcialReporte(
+            @PathVariable String id,
+            @RequestBody Map<String, Object> camposActualizados) throws Exception {
+
+        reporteServicio.actualizarParcialReporte(id, camposActualizados);
+
+        return ResponseEntity.ok()
+                .body(new MensajeDTO<>(false, "Reporte actualizado parcialmente con éxito"));
     }
 }

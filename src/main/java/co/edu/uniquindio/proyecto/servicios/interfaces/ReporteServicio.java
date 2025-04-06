@@ -1,12 +1,10 @@
 package co.edu.uniquindio.proyecto.servicios.interfaces;
 
-import co.edu.uniquindio.proyecto.dto.ComentarioDTO;
-import co.edu.uniquindio.proyecto.dto.CrearReporteDTO;
-import co.edu.uniquindio.proyecto.dto.EditarReporteDTO;
-import co.edu.uniquindio.proyecto.dto.ReporteDTO;
+import co.edu.uniquindio.proyecto.dto.*;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 
 public interface ReporteServicio {
@@ -21,4 +19,8 @@ public interface ReporteServicio {
     //requisito de agregar un comentario y listar comentarios
     String agregarComentario(String idReporte, ComentarioDTO comentarioDTO) throws Exception;
     List<ComentarioDTO> listarComentarios(String idReporte) throws Exception;
+
+    //HISTORIAL REPORTE
+    List<HistorialReporteDTO> obtenerHistorial(String idReporte) throws Exception;
+    void actualizarParcialReporte(String id, Map<String, Object> camposActualizados) throws Exception;
 }

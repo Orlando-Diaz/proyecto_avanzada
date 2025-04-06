@@ -50,20 +50,16 @@ public class UsuarioServicioImpl implements UsuarioServicio {
             throw new Exception("No se encontró el usuario con el id "+id);
         }
 
-        //Buscamos el usuario que se quiere obtener
         ObjectId objectId = new ObjectId(id);
         Optional<Usuario> usuarioOptional = usuarioRepo.findById(objectId);
 
-        //Si no se encontró el usuario, lanzamos una excepción
         if(usuarioOptional.isEmpty()){
             throw new Exception("No se encontró el usuario con el id "+id);
         }
 
-        //Obtenemos el usuario que se quiere eliminar y le asignamos el estado eliminado
         Usuario usuario = usuarioOptional.get();
         usuario.setEstado(EstadoUsuario.ELIMINADO);
 
-        //Como el objeto usuario ya tiene un id, el save() no crea un nuevo registro sino que actualiza el que ya existe
         usuarioRepo.save(usuario);
     }
 

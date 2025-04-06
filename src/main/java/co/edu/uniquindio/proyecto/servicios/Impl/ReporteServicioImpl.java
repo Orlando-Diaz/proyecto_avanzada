@@ -20,9 +20,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,7 +35,7 @@ public class ReporteServicioImpl implements ReporteServicio {
 
     @Override
     public void crearReporte(CrearReporteDTO crearReporteDTO) throws Exception {
-        // Validar usuario
+        // 1. Validar usuario
         if (!ObjectId.isValid(crearReporteDTO.idUsuario())) {
             throw new Exception("El ID del usuario es inválido");
         }
@@ -49,7 +47,7 @@ public class ReporteServicioImpl implements ReporteServicio {
             throw new Exception("El usuario no existe");
         }
 
-        // Validar campos requeridos
+        // 2. Validar campos requeridos
         if(crearReporteDTO.titulo().isBlank()) {
             throw new Exception("El título es obligatorio");
         }
@@ -58,77 +56,122 @@ public class ReporteServicioImpl implements ReporteServicio {
             throw new Exception("La descripción es obligatoria");
         }
 
-        // Mapear DTO a entidad
         Reporte reporte = reporteMapper.toDocument(crearReporteDTO);
 
         // Configurar valores iniciales
+        reporte.setId(new ObjectId()); // Generar nuevo ID
         reporte.setFecha(LocalDateTime.now());
         reporte.setEstadoActual(EstadoReporte.PENDIENTE);
-        reporte.setId(usuarioId);
-        reporte.setComentarios(new ArrayList<>()); // Inicializar la lista de comentarios
-        reporte.setHistorial(new ArrayList<>()); // Inicializar el historial por si acaso
-
-        // Guardar en base de datos
-        Reporte reporteGuardado = reporteRepo.save(reporte);
-    }
-
-    @Override
-    public void editarReporte(String id, EditarReporteDTO editarReporteDTO) throws Exception {
-        // Validar formato del ID
-        if (!ObjectId.isValid(id)) {
-            throw new Exception("ID de reporte inválido");
-        }
-
-        ObjectId reporteId = new ObjectId(id);
-        Optional<Reporte> optionalReporte = reporteRepo.findById(reporteId);
-
-        if (optionalReporte.isEmpty()) {
-            throw new Exception("Reporte no encontrado");
-        }
-
-        Reporte reporte = optionalReporte.get();
-
-        // Actualizar campos usando el mapper
-        reporteMapper.updateFromDto(editarReporteDTO, reporte);
-
-        // Asegurar que el historial no sea null
-        if (reporte.getHistorial() == null) {
-            reporte.setHistorial(new ArrayList<>());
-        }
-
-        // Agregar entrada al historial
-        reporte.getHistorial().add(new HistorialReporte(
-                "Reporte modificado",
-                reporte.getEstadoActual(),
-                LocalDateTime.now()
-        ));
+        reporte.setComentarios(new ArrayList<>());
+        reporte.setHistorial(new ArrayList<>());
 
         reporteRepo.save(reporte);
     }
 
     @Override
+    public void editarReporte(String id, EditarReporteDTO editarReporteDTO) throws Exception {
+        Reporte reporte = obtenerReporte(id);
+        Map<String, String> cambios = new HashMap<>();
+
+        // Actualizar solo campos no nulos
+        if (editarReporteDTO.titulo() != null) {
+            if (!editarReporteDTO.titulo().equals(reporte.getTitulo())) {
+                cambios.put("titulo", "De '"+reporte.getTitulo()+"' a '"+editarReporteDTO.titulo()+"'");
+                reporte.setTitulo(editarReporteDTO.titulo());
+            }
+        }
+
+        if (editarReporteDTO.descripcion() != null) {
+            if (!editarReporteDTO.descripcion().equals(reporte.getDescripcion())) {
+                cambios.put("descripcion", "Descripción modificada");
+                reporte.setDescripcion(editarReporteDTO.descripcion());
+            }
+        }
+
+        // Repetir para otros campos...
+
+        if (!cambios.isEmpty()) {
+            HistorialReporte historialEntry = new HistorialReporte(
+                    "Reporte modificado",
+                    reporte.getEstadoActual(),
+                    LocalDateTime.now(),
+                    cambios
+            );
+
+            if (reporte.getHistorial() == null) {
+                reporte.setHistorial(new ArrayList<>());
+            }
+            reporte.getHistorial().add(historialEntry);
+        }
+
+        reporteRepo.save(reporte);
+    }
+
+    private Reporte cloneReporte(Reporte original) {
+        // Implementa una copia profunda del reporte
+        Reporte copia = new Reporte();
+        copia.setTitulo(original.getTitulo());
+        copia.setDescripcion(original.getDescripcion());
+        copia.setEstadoActual(original.getEstadoActual());
+        // Copiar otros campos relevantes...
+        return copia;
+    }
+
+    private Map<String, String> detectarCambios(Reporte original, Reporte actualizado) {
+        Map<String, String> cambios = new HashMap<>();
+
+        if (!original.getTitulo().equals(actualizado.getTitulo())) {
+            cambios.put("titulo", "De '" + original.getTitulo() + "' a '" + actualizado.getTitulo() + "'");
+        }
+
+        if (!original.getDescripcion().equals(actualizado.getDescripcion())) {
+            cambios.put("descripcion", "Descripción modificada");
+        }
+
+        if (original.getEstadoActual() != actualizado.getEstadoActual()) {
+            cambios.put("estado", "De " + original.getEstadoActual() + " a " + actualizado.getEstadoActual());
+        }
+
+        // Agregar más comparaciones según sea necesario (ubicación, categoría, etc.)
+
+        return cambios;
+    }
+
+    @Override
     public void eliminarReporte(String id) throws Exception {
-        if(!ObjectId.isValid(id)) {
+        // Validación del ID
+        if (!ObjectId.isValid(id)) {
             throw new Exception("ID de reporte inválido");
         }
 
         ObjectId reporteId = new ObjectId(id);
-        Optional<Reporte> optionalReporte = reporteRepo.findById(reporteId);
+        Reporte reporte = reporteRepo.findById(reporteId)
+                .orElseThrow(() -> new Exception("Reporte no encontrado"));
 
-        if(optionalReporte.isEmpty()) {
-            throw new Exception("Reporte no encontrado");
-        }
+        // Guardar el estado anterior para el historial
+        EstadoReporte estadoAnterior = reporte.getEstadoActual();
 
-        Reporte reporte = optionalReporte.get();
+        // Cambiar el estado
         reporte.setEstadoActual(EstadoReporte.ELIMINADO);
 
-        // Registrar en historial
-        reporte.getHistorial().add(new HistorialReporte(
-                "Reporte eliminado",
-                EstadoReporte.ELIMINADO,
-                LocalDateTime.now()
-        ));
+        // Preparar detalles de cambios para el historial
+        Map<String, String> cambios = new HashMap<>();
+        cambios.put("estado", "De " + estadoAnterior + " a ELIMINADO");
 
+        // Registrar en historial con más detalles
+        HistorialReporte entradaHistorial = new HistorialReporte(
+                "Reporte eliminado del sistema",
+                EstadoReporte.ELIMINADO,
+                LocalDateTime.now(),
+                cambios
+        );
+
+        // Asegurarse que la lista de historial existe
+        if (reporte.getHistorial() == null) {
+            reporte.setHistorial(new ArrayList<>());
+        }
+
+        reporte.getHistorial().add(entradaHistorial);
         reporteRepo.save(reporte);
     }
 
@@ -160,7 +203,7 @@ public class ReporteServicioImpl implements ReporteServicio {
         Criteria criteria = new Criteria();
 
         if (nombre != null && !nombre.isBlank()) {
-            criteria.and("titulo").regex(nombre, "i"); // Búsqueda insensible a mayúsculas
+            criteria.and("titulo").regex(nombre, "i");
         }
 
         if (ciudad != null && !ciudad.isBlank()) {
@@ -168,7 +211,7 @@ public class ReporteServicioImpl implements ReporteServicio {
         }
 
         if (categoria != null && !categoria.isBlank()) {
-            criteria.and("categoria").is(categoria); // 👈 Filtro por categoría
+            criteria.and("categoria").is(categoria);
         }
 
         Query query = new Query(criteria);
@@ -178,13 +221,11 @@ public class ReporteServicioImpl implements ReporteServicio {
                 .toList();
     }
 
-    // Método auxiliar para obtener un reporte
     private Reporte obtenerReporte(String idReporte) throws Exception {
         return reporteRepo.findById(new ObjectId(idReporte))
                 .orElseThrow(() -> new Exception("No se encontró el reporte"));
     }
 
-    // Método para convertir Comentario a DTO
     private ComentarioDTO convertirComentarioADTO(Comentario comentario) {
         return new ComentarioDTO(
                 comentario.getIdUsuario().toString(),
@@ -193,6 +234,10 @@ public class ReporteServicioImpl implements ReporteServicio {
 
         );
     }
+
+    /*
+    AGREGAR COMENTARIO A UN REPORTE
+     */
 
     public String agregarComentario(String idReporte, ComentarioDTO comentarioDTO) throws Exception {
         Reporte reporte = obtenerReporte(idReporte);
@@ -209,6 +254,10 @@ public class ReporteServicioImpl implements ReporteServicio {
         return comentario.getId().toString();
     }
 
+    /*
+    LISTAR COMENTARIOS EN UN REPORTE
+     */
+
     @Override
     public List<ComentarioDTO> listarComentarios(String idReporte) throws Exception {
         Reporte reporte = obtenerReporte(idReporte);
@@ -217,4 +266,90 @@ public class ReporteServicioImpl implements ReporteServicio {
                 .collect(Collectors.toList());
     }
 
+    /*
+    OBTENER EL HISTORIAL DE UN REPORTE MEDIANTE SU ID
+     */
+
+    @Override
+    public List<HistorialReporteDTO> obtenerHistorial(String idReporte) throws Exception {
+        if (!ObjectId.isValid(idReporte)) {
+            throw new IllegalArgumentException("ID de reporte inválido");
+        }
+
+        Reporte reporte = reporteRepo.findById(new ObjectId(idReporte))
+                .orElseThrow(() -> new Exception("Reporte no encontrado"));
+
+        return reporte.getHistorial().stream()
+                .map(h -> new HistorialReporteDTO(
+                        h.getObservaciones(),
+                        h.getEstado(),
+                        h.getFecha(),
+                        h.getCambios() != null ? h.getCambios() : Map.of()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void actualizarParcialReporte(String id, Map<String, Object> camposActualizados) throws Exception {
+        // 1. Validar ID y obtener reporte
+        if (!ObjectId.isValid(id)) {
+            throw new Exception("ID de reporte inválido");
+        }
+
+        Reporte reporte = reporteRepo.findById(new ObjectId(id))
+                .orElseThrow(() -> new Exception("Reporte no encontrado"));
+
+        // 2. Preparar para registrar cambios
+        Map<String, String> cambiosDetallados = new HashMap<>();
+
+        // 3. Actualizar solo campos proporcionados
+        camposActualizados.forEach((campo, valor) -> {
+            try {
+                switch (campo) {
+                    case "titulo":
+                        if (valor != null && !valor.toString().equals(reporte.getTitulo())) {
+                            cambiosDetallados.put("titulo", "De '"+reporte.getTitulo()+"' a '"+valor+"'");
+                            reporte.setTitulo(valor.toString());
+                        }
+                        break;
+
+                    case "descripcion":
+                        if (valor != null && !valor.toString().equals(reporte.getDescripcion())) {
+                            cambiosDetallados.put("descripcion", "Descripción modificada");
+                            reporte.setDescripcion(valor.toString());
+                        }
+                        break;
+
+                    case "categoria":
+                        if (valor != null && !valor.toString().equals(reporte.getCategoria())) {
+                            cambiosDetallados.put("categoria", "De '"+reporte.getCategoria()+"' a '"+valor+"'");
+                            reporte.setCategoria(valor.toString());
+                        }
+                        break;
+
+                    // Añadir más campos según necesites
+                }
+            } catch (Exception e) {
+                // Manejar error si el campo no existe
+            }
+        });
+
+        // 4. Registrar en historial si hubo cambios
+        if (!cambiosDetallados.isEmpty()) {
+            HistorialReporte entradaHistorial = new HistorialReporte(
+                    "Actualización parcial de reporte",
+                    reporte.getEstadoActual(),
+                    LocalDateTime.now(),
+                    cambiosDetallados
+            );
+
+            if (reporte.getHistorial() == null) {
+                reporte.setHistorial(new ArrayList<>());
+            }
+            reporte.getHistorial().add(entradaHistorial);
+
+            // 5. Guardar cambios
+            reporteRepo.save(reporte);
+        }
+    }
 }
