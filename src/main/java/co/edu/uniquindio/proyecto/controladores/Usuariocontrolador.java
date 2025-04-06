@@ -89,7 +89,7 @@ public class Usuariocontrolador {
             @Parameter(description = "Filtro por nombre ")
             @RequestParam(required = false) String nombre,
 
-            @Parameter(description = "Filtro por ciudad", example = "ARMENIA")
+            @Parameter(description = "Filtro por ciudad")
             @RequestParam(required = false) String ciudad,
 
             @Parameter(description = "Número de página (0-based)", example = "0")
