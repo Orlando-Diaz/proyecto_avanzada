@@ -14,6 +14,7 @@ import org.bson.types.ObjectId;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import org.springframework.data.mongodb.core.query.Query;
@@ -31,14 +32,18 @@ public class UsuarioServicioImpl implements UsuarioServicio {
     private final UsuarioMapper usuarioMapper;
     private final MongoTemplate mongoTemplate;
     private final EmailServicio emailServicio;
+    private final PasswordEncoder passwordEncoder;
+
 
     @Override
     public void crear(CrearUsuarioDTO crearUsuarioDTO) throws Exception {
-
-        if(existeEmail(crearUsuarioDTO.email()) ){
+        if(existeEmail(crearUsuarioDTO.email())) {
             throw new Exception("El correo "+crearUsuarioDTO.email()+" ya está en uso");
         }
+
         Usuario usuario = usuarioMapper.toDocument(crearUsuarioDTO);
+        usuario.setPassword(passwordEncoder.encode(crearUsuarioDTO.password())); // Encriptar
+
         usuarioRepo.save(usuario);
     }
 
