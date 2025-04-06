@@ -1,42 +1,61 @@
 package co.edu.uniquindio.proyecto.mapper;
 
-import co.edu.uniquindio.proyecto.dto.CrearReporteDTO;
-import co.edu.uniquindio.proyecto.dto.EditarReporteDTO;
-import co.edu.uniquindio.proyecto.dto.ReporteDTO;
+import co.edu.uniquindio.proyecto.dto.*;
 import co.edu.uniquindio.proyecto.modelo.documentos.Reporte;
-import co.edu.uniquindio.proyecto.modelo.documentos.Categoria;
+import co.edu.uniquindio.proyecto.modelo.documentos.Ubicacion;
+import co.edu.uniquindio.proyecto.modelo.enums.EstadoReporte;
 import org.bson.types.ObjectId;
-import org.mapstruct.*;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.Named;
 
-@Mapper(componentModel = "spring")
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Mapper(componentModel = "spring", imports = {LocalDateTime.class, ArrayList.class})
 public interface ReporteMapper {
 
-    @Mapping(source = "categoriaNombre", target = "categoria", qualifiedByName = "nombreToCategoria")
+    // Mapeo para creación
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "estadoActual", constant = "PENDIENTE")
+    @Mapping(target = "fecha", expression = "java(LocalDateTime.now())")
+    @Mapping(target = "contadorImportante", constant = "0")
+    @Mapping(target = "historial", expression = "java(new ArrayList<>())")
+    @Mapping(target = "comentarios", expression = "java(new ArrayList<>())") // Inicializa lista de comentarios
+    @Mapping(target = "idUsuario", source = "idUsuario", qualifiedByName = "stringToObjectId")
+    @Mapping(target = "ubicacion", source = "ubicacion")
+    @Mapping(target = "fotos", source = "fotos")
     Reporte toDocument(CrearReporteDTO dto);
 
+    // Mapeo para actualización
     @Mapping(target = "id", ignore = true)
-    @Mapping(source = "categoriaNombre", target = "categoria", qualifiedByName = "nombreToCategoria")
+    @Mapping(target = "idUsuario", ignore = true)
+    @Mapping(target = "fecha", ignore = true)
+    @Mapping(target = "estadoActual", ignore = true)
+    @Mapping(target = "historial", ignore = true)
+    @Mapping(target = "contadorImportante", ignore = true)
+    @Mapping(target = "comentarios", ignore = true) // No se actualizan los comentarios en la edición
+    @Mapping(target = "ubicacion", source = "ubicacion")
+    @Mapping(target = "fotos", source = "fotos")
     void updateFromDto(EditarReporteDTO dto, @MappingTarget Reporte reporte);
 
-    @Mapping(source = "categoria.id", target = "categoriaId")
+    // Convertir a DTO
+    @Mapping(target = "id", source = "id", qualifiedByName = "objectIdToString")
+    @Mapping(target = "idUsuario", source = "idUsuario", qualifiedByName = "objectIdToString")
+    @Mapping(target = "ubicacion", source = "ubicacion")
+    @Mapping(target = "comentarios", ignore = true) // O mapear si quieres incluirlos en el DTO
     ReporteDTO toDto(Reporte reporte);
 
-    // Método para convertir nombre de categoría a objeto Categoria
-    @Named("nombreToCategoria")
-    default Categoria nombreToCategoria(String nombre) {
-        if (nombre == null) {
-            return null;
-        }
-        return Categoria.builder().nombre(nombre).build();
+    /* Métodos de conversión */
+    @Named("stringToObjectId")
+    default ObjectId stringToObjectId(String id) {
+        return new ObjectId(id);
     }
 
-    // Método para convertir ObjectId a String
-    default String map(ObjectId value) {
-        return value != null ? value.toString() : null;
-    }
-
-    // Método para convertir String a ObjectId
-    default ObjectId map(String value) {
-        return value != null ? new ObjectId(value) : null;
+    @Named("objectIdToString")
+    default String objectIdToString(ObjectId id) {
+        return id != null ? id.toString() : null;
     }
 }

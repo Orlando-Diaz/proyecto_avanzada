@@ -1,10 +1,8 @@
 package co.edu.uniquindio.proyecto.servicios.Impl;
 
-import co.edu.uniquindio.proyecto.dto.CrearReporteDTO;
-import co.edu.uniquindio.proyecto.dto.EditarReporteDTO;
-import co.edu.uniquindio.proyecto.dto.EnviarCorreoDTO;
-import co.edu.uniquindio.proyecto.dto.ReporteDTO;
+import co.edu.uniquindio.proyecto.dto.*;
 import co.edu.uniquindio.proyecto.mapper.ReporteMapper;
+import co.edu.uniquindio.proyecto.modelo.documentos.Comentario;
 import co.edu.uniquindio.proyecto.modelo.documentos.HistorialReporte;
 import co.edu.uniquindio.proyecto.modelo.documentos.Reporte;
 import co.edu.uniquindio.proyecto.modelo.documentos.Usuario;
@@ -25,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -66,10 +65,11 @@ public class ReporteServicioImpl implements ReporteServicio {
         reporte.setFecha(LocalDateTime.now());
         reporte.setEstadoActual(EstadoReporte.PENDIENTE);
         reporte.setId(usuarioId);
+        reporte.setComentarios(new ArrayList<>()); // Inicializar la lista de comentarios
+        reporte.setHistorial(new ArrayList<>()); // Inicializar el historial por si acaso
 
         // Guardar en base de datos
         Reporte reporteGuardado = reporteRepo.save(reporte);
-
     }
 
     @Override
@@ -174,6 +174,45 @@ public class ReporteServicioImpl implements ReporteServicio {
         return mongoTemplate.find(query, Reporte.class).stream()
                 .map(reporteMapper::toDto)
                 .toList();
+    }
+
+    // Método auxiliar para obtener un reporte
+    private Reporte obtenerReporte(String idReporte) throws Exception {
+        return reporteRepo.findById(new ObjectId(idReporte))
+                .orElseThrow(() -> new Exception("No se encontró el reporte"));
+    }
+
+    // Método para convertir Comentario a DTO
+    private ComentarioDTO convertirComentarioADTO(Comentario comentario) {
+        return new ComentarioDTO(
+                comentario.getIdUsuario().toString(),
+                comentario.getContenido(),
+                comentario.getFecha()
+
+        );
+    }
+
+    public String agregarComentario(String idReporte, ComentarioDTO comentarioDTO) throws Exception {
+        Reporte reporte = obtenerReporte(idReporte);
+
+        Comentario comentario = new Comentario();
+        comentario.setId(new ObjectId());  // Generado aquí
+        comentario.setIdUsuario(new ObjectId(comentarioDTO.idUsuario()));
+        comentario.setContenido(comentarioDTO.contenido());
+        comentario.setFecha(LocalDateTime.now());  // Fecha generada aquí
+
+        reporte.getComentarios().add(comentario);
+        reporteRepo.save(reporte);
+
+        return comentario.getId().toString();  // Devuelve el ID generado
+    }
+
+    @Override
+    public List<ComentarioDTO> listarComentarios(String idReporte) throws Exception {
+        Reporte reporte = obtenerReporte(idReporte);
+        return reporte.getComentarios().stream()
+                .map(this::convertirComentarioADTO)
+                .collect(Collectors.toList());
     }
 
 }

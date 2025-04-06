@@ -1,5 +1,6 @@
 package co.edu.uniquindio.proyecto.servicios.interfaces;
 
+import co.edu.uniquindio.proyecto.dto.ComentarioDTO;
 import co.edu.uniquindio.proyecto.dto.CrearReporteDTO;
 import co.edu.uniquindio.proyecto.dto.EditarReporteDTO;
 import co.edu.uniquindio.proyecto.dto.ReporteDTO;
@@ -16,4 +17,8 @@ public interface ReporteServicio {
     ReporteDTO obtenerReportes(String id) throws Exception;
     List<ReporteDTO> listarTodos();
     List<ReporteDTO> listarTodos(String nombre, String ciudad);
+
+    //requisito de agregar un comentario y listar comentarios
+    String agregarComentario(String idReporte, ComentarioDTO comentarioDTO) throws Exception;
+    List<ComentarioDTO> listarComentarios(String idReporte) throws Exception;
 }

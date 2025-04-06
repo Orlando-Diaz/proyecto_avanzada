@@ -58,4 +58,20 @@ public class ReporteControlador {
                 new MensajeDTO<>(false, reporteServicio.listarTodos(nombre, ciudad))
         );
     }
+
+    @PostMapping("/{idReporte}/comentarios")
+    public ResponseEntity<MensajeDTO<String>> agregarComentario(
+            @PathVariable String idReporte,
+            @Valid @RequestBody ComentarioDTO comentarioDTO) throws Exception {
+
+        String idComentario = reporteServicio.agregarComentario(idReporte, comentarioDTO);
+        return ResponseEntity.ok().body(new MensajeDTO<>(false, idComentario));
+    }
+
+    @GetMapping("/{idReporte}/comentarios")
+    public ResponseEntity<MensajeDTO<List<ComentarioDTO>>> listarComentarios(
+            @PathVariable String idReporte) throws Exception {
+        List<ComentarioDTO> comentarios = reporteServicio.listarComentarios(idReporte);
+        return ResponseEntity.ok().body(new MensajeDTO<>(false, comentarios));
+    }
 }

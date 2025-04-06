@@ -23,5 +23,5 @@ public class ReporteDTO {
     private String estadoActual;
 
     private Ciudad ciudad;
-    private String categoriaId;
+    List<ComentarioDTO> comentarios;
 }
