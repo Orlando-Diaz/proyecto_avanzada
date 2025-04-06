@@ -95,15 +95,4 @@ public class ReporteControlador {
         return ResponseEntity.ok(historial);
     }
 
-    @Operation(summary = "Actualizar parcialmente un reporte")
-    @PatchMapping("/{id}")
-    public ResponseEntity<MensajeDTO<String>> actualizarParcialReporte(
-            @PathVariable String id,
-            @RequestBody Map<String, Object> camposActualizados) throws Exception {
-
-        reporteServicio.actualizarParcialReporte(id, camposActualizados);
-
-        return ResponseEntity.ok()
-                .body(new MensajeDTO<>(false, "Reporte actualizado parcialmente con éxito"));
-    }
 }

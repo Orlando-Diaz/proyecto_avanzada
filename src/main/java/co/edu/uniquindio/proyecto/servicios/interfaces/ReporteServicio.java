@@ -22,5 +22,6 @@ public interface ReporteServicio {
 
     //HISTORIAL REPORTE
     List<HistorialReporteDTO> obtenerHistorial(String idReporte) throws Exception;
-    void actualizarParcialReporte(String id, Map<String, Object> camposActualizados) throws Exception;
+
+
 }

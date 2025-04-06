@@ -17,6 +17,7 @@ import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -70,40 +71,38 @@ public class ReporteServicioImpl implements ReporteServicio {
 
     @Override
     public void editarReporte(String id, EditarReporteDTO editarReporteDTO) throws Exception {
+        // 1. Obtener reporte actual
         Reporte reporte = obtenerReporte(id);
+
+        // 2. Obtener ID del cliente desde el token JWT (¡Aquí va!)
+        String clienteId = SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName(); // Asume que el username es el ID
+
+        // 3. Preparar cambios (tu lógica actual)
         Map<String, String> cambios = new HashMap<>();
-
-        // Actualizar solo campos no nulos
-        if (editarReporteDTO.titulo() != null) {
-            if (!editarReporteDTO.titulo().equals(reporte.getTitulo())) {
-                cambios.put("titulo", "De '"+reporte.getTitulo()+"' a '"+editarReporteDTO.titulo()+"'");
-                reporte.setTitulo(editarReporteDTO.titulo());
-            }
+        if (editarReporteDTO.titulo() != null && !editarReporteDTO.titulo().equals(reporte.getTitulo())) {
+            cambios.put("titulo", reporte.getTitulo() + " → " + editarReporteDTO.titulo());
+            reporte.setTitulo(editarReporteDTO.titulo());
         }
+        // ... otros campos ...
 
-        if (editarReporteDTO.descripcion() != null) {
-            if (!editarReporteDTO.descripcion().equals(reporte.getDescripcion())) {
-                cambios.put("descripcion", "Descripción modificada");
-                reporte.setDescripcion(editarReporteDTO.descripcion());
-            }
-        }
-
-        // Repetir para otros campos...
-
+        // 4. Registrar en historial
         if (!cambios.isEmpty()) {
-            HistorialReporte historialEntry = new HistorialReporte(
-                    "Reporte modificado",
-                    reporte.getEstadoActual(),
-                    LocalDateTime.now(),
-                    cambios
-            );
+            HistorialReporte historial = new HistorialReporte();
+            historial.setClienteId(new ObjectId(clienteId)); // Usar el ID del token
+            historial.setObservaciones("Edición manual");
+            historial.setEstado(reporte.getEstadoActual());
+            historial.setFecha(LocalDateTime.now());
+            historial.setCambios(cambios);
 
             if (reporte.getHistorial() == null) {
                 reporte.setHistorial(new ArrayList<>());
             }
-            reporte.getHistorial().add(historialEntry);
+            reporte.getHistorial().add(historial);
         }
 
+        // 5. Guardar
         reporteRepo.save(reporte);
     }
 
@@ -289,67 +288,4 @@ public class ReporteServicioImpl implements ReporteServicio {
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public void actualizarParcialReporte(String id, Map<String, Object> camposActualizados) throws Exception {
-        // 1. Validar ID y obtener reporte
-        if (!ObjectId.isValid(id)) {
-            throw new Exception("ID de reporte inválido");
-        }
-
-        Reporte reporte = reporteRepo.findById(new ObjectId(id))
-                .orElseThrow(() -> new Exception("Reporte no encontrado"));
-
-        // 2. Preparar para registrar cambios
-        Map<String, String> cambiosDetallados = new HashMap<>();
-
-        // 3. Actualizar solo campos proporcionados
-        camposActualizados.forEach((campo, valor) -> {
-            try {
-                switch (campo) {
-                    case "titulo":
-                        if (valor != null && !valor.toString().equals(reporte.getTitulo())) {
-                            cambiosDetallados.put("titulo", "De '"+reporte.getTitulo()+"' a '"+valor+"'");
-                            reporte.setTitulo(valor.toString());
-                        }
-                        break;
-
-                    case "descripcion":
-                        if (valor != null && !valor.toString().equals(reporte.getDescripcion())) {
-                            cambiosDetallados.put("descripcion", "Descripción modificada");
-                            reporte.setDescripcion(valor.toString());
-                        }
-                        break;
-
-                    case "categoria":
-                        if (valor != null && !valor.toString().equals(reporte.getCategoria())) {
-                            cambiosDetallados.put("categoria", "De '"+reporte.getCategoria()+"' a '"+valor+"'");
-                            reporte.setCategoria(valor.toString());
-                        }
-                        break;
-
-                    // Añadir más campos según necesites
-                }
-            } catch (Exception e) {
-                // Manejar error si el campo no existe
-            }
-        });
-
-        // 4. Registrar en historial si hubo cambios
-        if (!cambiosDetallados.isEmpty()) {
-            HistorialReporte entradaHistorial = new HistorialReporte(
-                    "Actualización parcial de reporte",
-                    reporte.getEstadoActual(),
-                    LocalDateTime.now(),
-                    cambiosDetallados
-            );
-
-            if (reporte.getHistorial() == null) {
-                reporte.setHistorial(new ArrayList<>());
-            }
-            reporte.getHistorial().add(entradaHistorial);
-
-            // 5. Guardar cambios
-            reporteRepo.save(reporte);
-        }
-    }
 }

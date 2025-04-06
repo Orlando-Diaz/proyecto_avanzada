@@ -1,6 +1,5 @@
 package co.edu.uniquindio.proyecto.Config;
 
-
 import co.edu.uniquindio.proyecto.seguridad.AutenticacionEntryPoint;
 import co.edu.uniquindio.proyecto.seguridad.JWTFilter;
 import lombok.RequiredArgsConstructor;
@@ -38,17 +37,39 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(req -> req
+                        // Endpoints PÚBLICOS (sin autenticación)
                         .requestMatchers(
-                                "/api/auth/**",
+                                "/api/auth/**",  // ¡ESTA LÍNEA ES CLAVE! Incluye /api/auth/login
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
                                 "/swagger-ui.html",
-                                "/webjars/**"
+                                "/webjars/**",
+                                "/v3/api-docs",
+                                "/v3/api-docs/swagger-config",
+                                "/swagger-ui/index.html"
                         ).permitAll()
+
+                        // Registro de usuarios (público)
                         .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
+
+                        // Endpoints de administración
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+
+                        // Endpoints de clientes
                         .requestMatchers("/api/clientes/**").hasAnyAuthority("ROLE_CLIENTE", "ROLE_ADMIN")
+
+                        // Endpoints de usuarios
+                        .requestMatchers(HttpMethod.PUT, "/api/usuarios/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_CLIENTE")
+                        .requestMatchers(HttpMethod.GET, "/api/usuarios/**").authenticated()
+
+                        // Permisos para reportes
+                        .requestMatchers(HttpMethod.POST, "/api/reportes").hasAnyAuthority("ROLE_CLIENTE", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/reportes/**").hasAnyAuthority("ROLE_CLIENTE", "ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/reportes/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/reportes/**").authenticated()
+
+                        // Todos los demás endpoints requieren autenticación
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex ->
@@ -60,11 +81,11 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        // Configura las políticas de CORS para permitir solicitudes desde el frontend
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
+        config.setExposedHeaders(List.of("Authorization")); // Importante para JWT
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
@@ -74,16 +95,11 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        // Permite codificar y verificar contraseñas utilizando BCrypt
         return new BCryptPasswordEncoder();
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration
-                                                               configuration) throws Exception {
-        // Proporciona un AuthenticationManager para la autenticación de usuarios
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
     }
 }
-
-
