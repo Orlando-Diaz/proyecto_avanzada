@@ -16,7 +16,7 @@ public interface ReporteServicio {
     void eliminarReporte(String id) throws Exception;
     ReporteDTO obtenerReportes(String id) throws Exception;
     List<ReporteDTO> listarTodos();
-    List<ReporteDTO> listarTodos(String nombre, String ciudad);
+    List<ReporteDTO> listarTodos(String nombre, String ciudad,String categoria);
 
     //requisito de agregar un comentario y listar comentarios
     String agregarComentario(String idReporte, ComentarioDTO comentarioDTO) throws Exception;

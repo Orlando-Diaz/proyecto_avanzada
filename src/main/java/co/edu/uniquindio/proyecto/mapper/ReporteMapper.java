@@ -23,10 +23,11 @@ public interface ReporteMapper {
     @Mapping(target = "fecha", expression = "java(LocalDateTime.now())")
     @Mapping(target = "contadorImportante", constant = "0")
     @Mapping(target = "historial", expression = "java(new ArrayList<>())")
-    @Mapping(target = "comentarios", expression = "java(new ArrayList<>())") // Inicializa lista de comentarios
+    @Mapping(target = "comentarios", expression = "java(new ArrayList<>())")
     @Mapping(target = "idUsuario", source = "idUsuario", qualifiedByName = "stringToObjectId")
     @Mapping(target = "ubicacion", source = "ubicacion")
     @Mapping(target = "fotos", source = "fotos")
+    @Mapping(target = "categoria", source = "categoria")
     Reporte toDocument(CrearReporteDTO dto);
 
     // Mapeo para actualización

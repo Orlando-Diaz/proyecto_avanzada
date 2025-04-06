@@ -53,9 +53,10 @@ public class ReporteControlador {
     @GetMapping
     public ResponseEntity<MensajeDTO<List<ReporteDTO>>> listarReportes(
             @RequestParam(required = false) String nombre,
-            @RequestParam(required = false) String ciudad) {
+            @RequestParam(required = false) String ciudad,
+            @RequestParam(required = false) String categoria) {
         return ResponseEntity.ok().body(
-                new MensajeDTO<>(false, reporteServicio.listarTodos(nombre, ciudad))
+                new MensajeDTO<>(false, reporteServicio.listarTodos(nombre, ciudad, categoria))
         );
     }
 

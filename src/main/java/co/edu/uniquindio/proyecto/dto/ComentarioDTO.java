@@ -1,11 +1,13 @@
 package co.edu.uniquindio.proyecto.dto;
 
+import jakarta.validation.constraints.NotBlank;
+
 import java.time.LocalDateTime;
 
 public record ComentarioDTO(
 
-        String idUsuario,
-        String contenido,
+        @NotBlank String idUsuario,
+        @NotBlank String contenido,
         LocalDateTime fecha
 ) {
 }

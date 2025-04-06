@@ -88,7 +88,7 @@ public class ReporteServicioImpl implements ReporteServicio {
 
         Reporte reporte = optionalReporte.get();
 
-        // Actualizar campos usando el mapper (ignorar el ID en el DTO)
+        // Actualizar campos usando el mapper
         reporteMapper.updateFromDto(editarReporteDTO, reporte);
 
         // Asegurar que el historial no sea null
@@ -156,17 +156,19 @@ public class ReporteServicioImpl implements ReporteServicio {
     }
 
     @Override
-    public List<ReporteDTO> listarTodos(String nombre, String ciudad) {
+    public List<ReporteDTO> listarTodos(String nombre, String ciudad, String categoria) {
         Criteria criteria = new Criteria();
 
         if (nombre != null && !nombre.isBlank()) {
-            // Buscar por título (insensible a mayúsculas)
-            criteria.and("titulo").regex(nombre, "i");
+            criteria.and("titulo").regex(nombre, "i"); // Búsqueda insensible a mayúsculas
         }
 
         if (ciudad != null && !ciudad.isBlank()) {
-            // Convertir el String ciudad a ENUM y filtrar
             criteria.and("ciudad").is(Ciudad.valueOf(ciudad.toUpperCase()));
+        }
+
+        if (categoria != null && !categoria.isBlank()) {
+            criteria.and("categoria").is(categoria); // 👈 Filtro por categoría
         }
 
         Query query = new Query(criteria);
@@ -196,15 +198,15 @@ public class ReporteServicioImpl implements ReporteServicio {
         Reporte reporte = obtenerReporte(idReporte);
 
         Comentario comentario = new Comentario();
-        comentario.setId(new ObjectId());  // Generado aquí
+        comentario.setId(new ObjectId());
         comentario.setIdUsuario(new ObjectId(comentarioDTO.idUsuario()));
         comentario.setContenido(comentarioDTO.contenido());
-        comentario.setFecha(LocalDateTime.now());  // Fecha generada aquí
+        comentario.setFecha(LocalDateTime.now());
 
         reporte.getComentarios().add(comentario);
         reporteRepo.save(reporte);
 
-        return comentario.getId().toString();  // Devuelve el ID generado
+        return comentario.getId().toString();
     }
 
     @Override
