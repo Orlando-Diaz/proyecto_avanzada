@@ -4,12 +4,10 @@ import co.edu.uniquindio.proyecto.dto.LoginDTO;
 import co.edu.uniquindio.proyecto.dto.MensajeDTO;
 import co.edu.uniquindio.proyecto.dto.TokenDTO;
 import co.edu.uniquindio.proyecto.servicios.interfaces.AuthServicio;
+import co.edu.uniquindio.proyecto.servicios.interfaces.UsuarioServicio;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -17,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AutenticacionController {
 
     private final AuthServicio authServicio;
+    private final UsuarioServicio usuarioServicio;
 
     @PostMapping("/login")
     public ResponseEntity<MensajeDTO<Object>> login(@RequestBody LoginDTO loginDTO) {
@@ -29,4 +28,5 @@ public class AutenticacionController {
                     .body(new MensajeDTO<>(true, e.getMessage()));
         }
     }
+
 }

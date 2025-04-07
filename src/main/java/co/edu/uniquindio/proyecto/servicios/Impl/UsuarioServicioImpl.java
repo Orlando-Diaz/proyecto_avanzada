@@ -20,7 +20,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.data.mongodb.core.query.Query;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -33,6 +35,9 @@ public class UsuarioServicioImpl implements UsuarioServicio {
     private final MongoTemplate mongoTemplate;
     private final EmailServicio emailServicio;
     private final PasswordEncoder passwordEncoder;
+
+    private final Map<String, String> codigosVerificacion = new HashMap<>();
+
 
 
     @Override
@@ -143,5 +148,6 @@ public class UsuarioServicioImpl implements UsuarioServicio {
     private boolean existeEmail(String email) {
         return usuarioRepo.findByEmail(email).isPresent();
     }
+
 }
 
