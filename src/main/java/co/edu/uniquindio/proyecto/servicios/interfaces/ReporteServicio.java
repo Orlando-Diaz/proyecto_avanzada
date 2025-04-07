@@ -23,5 +23,7 @@ public interface ReporteServicio {
     //HISTORIAL REPORTE
     List<HistorialReporteDTO> obtenerHistorial(String idReporte) throws Exception;
 
+    int marcarComoImportante(String idReporte) throws Exception;
+    List<ReporteDTO> listarReportesOrdenadosPorImportancia();
 
 }

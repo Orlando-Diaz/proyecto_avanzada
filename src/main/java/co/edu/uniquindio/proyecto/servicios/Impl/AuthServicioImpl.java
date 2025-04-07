@@ -27,14 +27,7 @@ public class AuthServicioImpl implements AuthServicio {
         Usuario usuario = usuarioRepo.findByEmail(loginDTO.email())
                 .orElseThrow(() -> new Exception("Usuario no encontrado"));
 
-        /* 2. Verificar que la cuenta esté activa
-        if (usuario.getEstado() != EstadoUsuario.ACTIVO) {
-            throw new Exception("Cuenta no activada. Verifica tu correo.");
-        }
-        */
-
-
-        // 3. Generar token
+        // 2. Generar token
         String token = jwtUtils.generateToken(
                 usuario.getId().toString(),
                 Map.of(

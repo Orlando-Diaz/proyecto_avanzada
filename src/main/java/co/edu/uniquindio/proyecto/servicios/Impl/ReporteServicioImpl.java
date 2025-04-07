@@ -10,6 +10,7 @@ import co.edu.uniquindio.proyecto.modelo.enums.Ciudad;
 import co.edu.uniquindio.proyecto.modelo.enums.EstadoReporte;
 import co.edu.uniquindio.proyecto.repositorios.ReporteRepo;
 import co.edu.uniquindio.proyecto.repositorios.UsuarioRepo;
+import co.edu.uniquindio.proyecto.seguridad.JWTUtils;
 import co.edu.uniquindio.proyecto.servicios.interfaces.EmailServicio;
 import co.edu.uniquindio.proyecto.servicios.interfaces.ReporteServicio;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class ReporteServicioImpl implements ReporteServicio {
     private final MongoTemplate mongoTemplate;
     private final UsuarioRepo usuarioRepo;
     private final EmailServicio emailServicio;
+    private final JWTUtils jwtUtils;
 
     @Override
     public void crearReporte(CrearReporteDTO crearReporteDTO) throws Exception {
@@ -287,5 +289,31 @@ public class ReporteServicioImpl implements ReporteServicio {
                 ))
                 .collect(Collectors.toList());
     }
+
+    /*
+    MARCAR UN REPORTE COMO IMPORTANTE
+     */
+    @Override
+    public int marcarComoImportante(String idReporte) throws Exception {
+        Reporte reporte = reporteRepo.findById(new ObjectId(idReporte))
+                .orElseThrow(() -> new Exception("Reporte no encontrado"));
+
+        reporte.setContadorImportante(reporte.getContadorImportante() + 1);
+        reporteRepo.save(reporte);
+
+        return reporte.getContadorImportante(); // Devuelve el nuevo valor
+    }
+
+    @Override
+    public List<ReporteDTO> listarReportesOrdenadosPorImportancia() {
+        // 1. Obtener reportes ordenados
+        List<Reporte> reportes = reporteRepo.findAllByOrderByContadorImportanteDesc();
+
+        // 2. Convertir a DTO
+        return reportes.stream()
+                .map(reporteMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
 
 }

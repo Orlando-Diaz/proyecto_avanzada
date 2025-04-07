@@ -38,4 +38,19 @@ public class JWTUtils {
         byte[] secretKeyBytes = claveSecreta.getBytes();
         return Keys.hmacShaKeyFor(secretKeyBytes);
     }
+
+    // Nuevo método para validar token
+    public boolean esTokenValido(String token) {
+        try {
+            parseJwt(token); // Reutiliza el método existente
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    // Nuevo método para extraer el ID del usuario (subject)
+    public String extractUserId(String token) {
+        return parseJwt(token).getPayload().getSubject(); // Extrae el subject (ID)
+    }
 }

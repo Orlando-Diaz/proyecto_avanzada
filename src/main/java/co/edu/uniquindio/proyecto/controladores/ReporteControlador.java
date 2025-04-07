@@ -2,12 +2,16 @@ package co.edu.uniquindio.proyecto.controladores;
 
 import co.edu.uniquindio.proyecto.dto.*;
 import co.edu.uniquindio.proyecto.modelo.documentos.HistorialReporte;
+import co.edu.uniquindio.proyecto.modelo.documentos.Reporte;
+import co.edu.uniquindio.proyecto.repositorios.ReporteRepo;
 import co.edu.uniquindio.proyecto.servicios.interfaces.ReporteServicio;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.bson.types.ObjectId;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,7 +24,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ReporteControlador {
 
-    private final ReporteServicio reporteServicio; // Corregido el nombre
+    private final ReporteServicio reporteServicio;
+    private final ReporteRepo reporteRepo;
 
     @Operation(summary = "Crear un reporte")
     @PostMapping
@@ -93,6 +98,44 @@ public class ReporteControlador {
 
         List<HistorialReporteDTO> historial = reporteServicio.obtenerHistorial(id);
         return ResponseEntity.ok(historial);
+    }
+
+
+    @PostMapping("/{id}/importante")
+    public ResponseEntity<RespuestaImportanciaDTO> marcarImportante(
+            @PathVariable String id) {
+
+        try {
+            // Servicio ahora devuelve el contador actualizado
+            int nuevoContador = reporteServicio.marcarComoImportante(id);
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new RespuestaImportanciaDTO(
+                            "Reporte marcado como importante",
+                            id,
+                            nuevoContador
+                    ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new RespuestaImportanciaDTO(
+                            e.getMessage(),
+                            id,
+                            -1
+                    ));
+        }
+    }
+
+    @GetMapping("/ordenados-importancia")
+    public ResponseEntity<List<ReporteDTO>> listarReportesPorImportancia() {
+        try {
+            List<ReporteDTO> reportes = reporteServicio.listarReportesOrdenadosPorImportancia();
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(reportes);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
 }

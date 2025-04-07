@@ -24,5 +24,7 @@ public interface ReporteRepo extends MongoRepository<Reporte, ObjectId> {
 
     List<Reporte> findByTituloContainingAndCiudad(String titulo, Ciudad ciudad);
 
+    List<Reporte> findAllByOrderByContadorImportanteDesc();
+
 
 }
