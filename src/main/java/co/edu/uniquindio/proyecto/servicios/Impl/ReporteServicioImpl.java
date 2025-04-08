@@ -315,5 +315,44 @@ public class ReporteServicioImpl implements ReporteServicio {
                 .collect(Collectors.toList());
     }
 
+    //  Agregado 1:15 am 04-08-2025
+    @Override
+    public String editarEstadoReporte(String idReporte, String idUsuario, String motivo, EstadoReporteDTO estadoReporteDTO) throws Exception {
+
+        // Buscar el reporte
+        Reporte reporte = reporteRepo.findById(new ObjectId(idReporte))
+                .orElseThrow(() -> new Exception("Reporte no encontrado"));
+
+        // Obtener el nuevo estado
+        EstadoReporte nuevoEstado = EstadoReporte.valueOf(estadoReporteDTO.estado());
+
+        // Validar que el nuevo estado sea diferente al actual
+        if (reporte.getEstadoActual() == nuevoEstado) {
+            throw new Exception("El reporte ya tiene el estado: " + nuevoEstado);
+        }
+
+        // Si el reporte está eliminado, no se permite cambiar el estado
+        if (reporte.getEstadoActual() == EstadoReporte.ELIMINADO) {
+            throw new Exception("No se puede cambiar el estado de un reporte eliminado");
+        }
+
+        // Registrar motivo y responsable (esto depende de tu diseño, aquí un ejemplo sencillo)
+        String observacion = "Estado cambiado de " + reporte.getEstadoActual() + " a " + nuevoEstado
+                + " por usuario: " + idUsuario + ". Motivo: " + motivo;
+
+        // Aquí podrías tener una lista de historial de cambios si la entidad lo permite
+        // reporte.getHistorialEstados().add(new HistorialEstado(...));
+
+        // Actualizar el estado y la fecha de modificación
+        reporte.setEstadoActual(nuevoEstado);
+        reporte.setFecha(LocalDateTime.now());
+
+        // Persistir cambios
+        reporteRepo.save(reporte);
+
+        return "✅ Estado del reporte actualizado correctamente: " + nuevoEstado;
+
+    }
+
 
 }

@@ -10,7 +10,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
-public interface UsuarioMapper {
+public interface    UsuarioMapper {
 
     @Mapping(target = "rol", constant = "CLIENTE")
     @Mapping(target = "estado", constant = "INACTIVO")
