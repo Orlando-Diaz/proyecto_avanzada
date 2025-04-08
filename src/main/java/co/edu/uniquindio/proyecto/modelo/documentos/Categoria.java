@@ -13,7 +13,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @NoArgsConstructor
 public class Categoria {
     @Id
-    private String id; // Cambiado de ObjectId a String
+    private String id;
 
     @NotBlank
     @Size(min = 3, max = 50)
