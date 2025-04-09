@@ -68,6 +68,7 @@ public class ReporteControlador {
         );
     }
 
+    @Operation(summary = "Agregar Comentario")
     @PostMapping("/{idReporte}/comentarios")
     public ResponseEntity<MensajeDTO<String>> agregarComentario(
             @PathVariable String idReporte,
@@ -77,6 +78,7 @@ public class ReporteControlador {
         return ResponseEntity.ok().body(new MensajeDTO<>(false, idComentario));
     }
 
+    @Operation(summary = "Listar Comentario")
     @GetMapping("/{idReporte}/comentarios")
     public ResponseEntity<MensajeDTO<List<ComentarioDTO>>> listarComentarios(
             @PathVariable String idReporte) throws Exception {
