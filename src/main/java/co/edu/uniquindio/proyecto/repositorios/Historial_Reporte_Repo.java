@@ -9,5 +9,5 @@ import java.util.List;
 
 public interface Historial_Reporte_Repo extends MongoRepository<HistorialReporte, ObjectId> {
 
-    List<HistorialReporte> findByReporteId(String reporteId);
+    //List<HistorialReporte> findByReporteId(String reporteId);
 }

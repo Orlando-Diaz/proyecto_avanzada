@@ -29,7 +29,7 @@ public class CategoriaControlador {
         );
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/actualizarcat/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<MensajeDTO<String>> actualizarCategoria(
             @PathVariable String id,
