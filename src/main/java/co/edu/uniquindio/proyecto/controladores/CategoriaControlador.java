@@ -61,7 +61,7 @@ public class CategoriaControlador {
         );
     }
 
-    @Operation(summary = "Listar todas las categorias")
+    @Operation(summary = "Listar todas las categorias ")
     @GetMapping
     public ResponseEntity<MensajeDTO<List<CategoriaDTO>>> listarCategorias(
             @RequestParam(required = false) String nombre,

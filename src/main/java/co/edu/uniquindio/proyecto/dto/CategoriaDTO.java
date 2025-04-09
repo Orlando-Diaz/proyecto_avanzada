@@ -2,17 +2,10 @@ package co.edu.uniquindio.proyecto.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.*;
 
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
-public class CategoriaDTO {
-
-    private String id;
-
-    @NotBlank(message = "El nombre es obligatorio")
-    @Size(min = 3, max = 50, message = "El nombre debe tener entre 3 y 50 caracteres")
-    private String nombre;
-}
+public record CategoriaDTO(
+        String id,
+        @NotBlank(message = "El nombre es obligatorio")
+        @Size(min = 3, max = 50, message = "El nombre debe tener entre 3 y 50 caracteres")
+        String nombre
+) {}

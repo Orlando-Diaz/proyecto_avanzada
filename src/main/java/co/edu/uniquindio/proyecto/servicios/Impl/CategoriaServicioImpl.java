@@ -21,12 +21,12 @@ public class CategoriaServicioImpl implements CategoriaServicio {
 
     @Override
     public void crear(CrearCategoriaDTO crearCategoriaDTO) throws Exception {
-        if(categoriaRepo.existsByNombre(crearCategoriaDTO.getNombre())) {
-            throw new Exception("Ya existe una categoría con el nombre: " + crearCategoriaDTO.getNombre());
+        if(categoriaRepo.existsByNombre(crearCategoriaDTO.nombre())) { // Cambiado de getNombre() a nombre()
+            throw new Exception("Ya existe una categoría con el nombre: " + crearCategoriaDTO.nombre());
         }
 
         Categoria categoria = new Categoria();
-        categoria.setNombre(crearCategoriaDTO.getNombre());
+        categoria.setNombre(crearCategoriaDTO.nombre()); // Cambiado aquí también
 
         categoriaRepo.save(categoria);
     }
@@ -44,12 +44,12 @@ public class CategoriaServicioImpl implements CategoriaServicio {
         Categoria categoria = categoriaRepo.findById(id)
                 .orElseThrow(() -> new Exception("Categoría no encontrada con ID: " + id));
 
-        if(!categoria.getNombre().equals(categoriaDTO.getNombre()) &&
-                categoriaRepo.existsByNombre(categoriaDTO.getNombre())) {
-            throw new Exception("Ya existe una categoría con el nombre: " + categoriaDTO.getNombre());
+        if(!categoria.getNombre().equals(categoriaDTO.nombre()) &&
+                categoriaRepo.existsByNombre(categoriaDTO.nombre())) {
+            throw new Exception("Ya existe una categoría con el nombre: " + categoriaDTO.nombre());
         }
 
-        categoria.setNombre(categoriaDTO.getNombre());
+        categoria.setNombre(categoriaDTO.nombre());
         categoriaRepo.save(categoria);
     }
 
