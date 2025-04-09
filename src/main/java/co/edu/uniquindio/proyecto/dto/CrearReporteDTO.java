@@ -1,5 +1,6 @@
 package co.edu.uniquindio.proyecto.dto;
 
+import co.edu.uniquindio.proyecto.modelo.documentos.Ubicacion;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -10,9 +11,8 @@ import java.util.List;
 public record CrearReporteDTO(
         @NotBlank @Length(max = 150) String titulo,
         @NotBlank @Length(max = 400) String descripcion,
-        @NotEmpty List<String> rutaImagenes,
+        @NotEmpty List<String> fotos,
         @NotBlank String categoria,
-        @NotNull Ubicacion ubicacion,
+        @NotNull UbicacionDTO ubicacion,
         @NotBlank String idUsuario
-) {
-}
+) {}

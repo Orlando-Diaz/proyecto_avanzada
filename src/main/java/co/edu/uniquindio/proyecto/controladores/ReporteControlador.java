@@ -1,41 +1,145 @@
 package co.edu.uniquindio.proyecto.controladores;
 
-import co.edu.uniquindio.proyecto.dto.MensajeDTO;
-import co.edu.uniquindio.proyecto.dto.ReporteDTO;
+import co.edu.uniquindio.proyecto.dto.*;
+import co.edu.uniquindio.proyecto.modelo.documentos.HistorialReporte;
+import co.edu.uniquindio.proyecto.modelo.documentos.Reporte;
+import co.edu.uniquindio.proyecto.repositorios.ReporteRepo;
 import co.edu.uniquindio.proyecto.servicios.interfaces.ReporteServicio;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.bson.types.ObjectId;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
-@RestController()
+@Tag(name = "Reportes", description = "Gestión de reportes")
+@RestController
 @RequestMapping("/api/reportes")
+@RequiredArgsConstructor
 public class ReporteControlador {
 
-    public final ReporteServicio reporteServivio;
+    private final ReporteServicio reporteServicio;
+    private final ReporteRepo reporteRepo;
 
-    public ReporteControlador(ReporteServicio reporteServivio) {
-        this.reporteServivio = reporteServivio;
-    }
-
+    @Operation(summary = "Crear un reporte")
     @PostMapping
-    public ResponseEntity<MensajeDTO> crearReporte(@Valid @RequestBody ReporteDTO reporteDTO) {
-        return ResponseEntity.ok(new MensajeDTO(false, "SU reporte ha sido exitoso"));
+    public ResponseEntity<MensajeDTO<String>> crearReporte(@Valid @RequestBody CrearReporteDTO crearReporteDTO) throws Exception {
+        reporteServicio.crearReporte(crearReporteDTO);
+        return ResponseEntity.ok().body(new MensajeDTO<>(false, "Reporte creado exitosamente"));
     }
 
+    @Operation(summary = "Editar un reporte")
+    @PutMapping("/{id}")
+    public ResponseEntity<MensajeDTO<String>> editarReporte(
+            @PathVariable String id,
+            @Valid @RequestBody EditarReporteDTO editarReporteDTO
+    ) throws Exception {
+        reporteServicio.editarReporte(id, editarReporteDTO); // Enviar ID y DTO
+        return ResponseEntity.ok().body(new MensajeDTO<>(false, "Reporte actualizado exitosamente"));
+    }
+
+    @Operation(summary = "Eliminar un reporte")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<MensajeDTO<String>> eliminarReporte(@PathVariable String id) throws Exception {
+        reporteServicio.eliminarReporte(id);
+        return ResponseEntity.ok().body(new MensajeDTO<>(false, "Reporte eliminado exitosamente"));
+    }
+
+    @Operation(summary = "Obtener reporte por ID")
     @GetMapping("/{id}")
-    public ResponseEntity<MensajeDTO> editarReporte(@Valid @RequestBody ReporteDTO reporteDTO) {
-        return ResponseEntity.ok(new MensajeDTO(false, "Cuenta editada con exito"));
-    }
-    @PostMapping("/{id}")
-    public ResponseEntity<MensajeDTO> eliminarReporte(String id) throws Exception{
-        return ResponseEntity.ok(new MensajeDTO(false, "Cuenta eliminada"));
+    public ResponseEntity<MensajeDTO<ReporteDTO>> obtenerReporte(@PathVariable String id) throws Exception {
+        return ResponseEntity.ok().body(new MensajeDTO<>(false, reporteServicio.obtenerReportes(id)));
     }
 
+    @Operation(summary = "Listar todos los reportes")
     @GetMapping
-    public ResponseEntity<MensajeDTO<List<ReporteDTO>>> listarReportes() {
-        List<ReporteDTO> reportes = ReporteServicio.listarTodos();
-        return ResponseEntity.ok(new MensajeDTO<>(false, reportes));
+    public ResponseEntity<MensajeDTO<List<ReporteDTO>>> listarReportes(
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) String ciudad,
+            @RequestParam(required = false) String categoria) {
+        return ResponseEntity.ok().body(
+                new MensajeDTO<>(false, reporteServicio.listarTodos(nombre, ciudad, categoria))
+        );
     }
+
+    @Operation(summary = "Agregar un comentario al reporte")
+    @PostMapping("/{id}/comentarios")
+    public ResponseEntity<MensajeDTO<String>> agregarComentario(
+            @PathVariable String idReporte,
+            @Valid @RequestBody ComentarioDTO comentarioDTO) throws Exception {
+
+        String idComentario = reporteServicio.agregarComentario(idReporte, comentarioDTO);
+        return ResponseEntity.ok().body(new MensajeDTO<>(false, idComentario));
+    }
+
+    @Operation(summary = "Listar los comentarios de un reporte")
+    @GetMapping("/{id}/comentarios")
+    public ResponseEntity<MensajeDTO<List<ComentarioDTO>>> listarComentarios(
+            @PathVariable String idReporte) throws Exception {
+        List<ComentarioDTO> comentarios = reporteServicio.listarComentarios(idReporte);
+        return ResponseEntity.ok().body(new MensajeDTO<>(false, comentarios));
+    }
+
+    /*
+    HISTORIAL DE CAMBIOS DE UN REPORTE
+     */
+
+    @Operation(
+            summary = "Obtener historial de cambios",
+            description = "Muestra los cambios realizados en un reporte"
+    )
+    @GetMapping("/{id}/historial")
+    public ResponseEntity<List<HistorialReporteDTO>> obtenerHistorial(
+            @PathVariable String id) throws Exception {
+
+        List<HistorialReporteDTO> historial = reporteServicio.obtenerHistorial(id);
+        return ResponseEntity.ok(historial);
+    }
+
+
+    @Operation(summary = "Marcar un reporte como importante")
+    @PostMapping("/{id}/importante")
+    public ResponseEntity<RespuestaImportanciaDTO> marcarImportante(
+            @PathVariable String id) {
+
+        try {
+            // Servicio ahora devuelve el contador actualizado
+            int nuevoContador = reporteServicio.marcarComoImportante(id);
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new RespuestaImportanciaDTO(
+                            "Reporte marcado como importante",
+                            id,
+                            nuevoContador
+                    ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new RespuestaImportanciaDTO(
+                            e.getMessage(),
+                            id,
+                            -1
+                    ));
+        }
+    }
+
+    @Operation(summary = "Listar reportes por importancia")
+    @GetMapping("/ordenados-importancia")
+    public ResponseEntity<List<ReporteDTO>> listarReportesPorImportancia() {
+        try {
+            List<ReporteDTO> reportes = reporteServicio.listarReportesOrdenadosPorImportancia();
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(reportes);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
 }

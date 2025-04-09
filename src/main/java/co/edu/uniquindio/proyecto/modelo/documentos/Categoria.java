@@ -1,28 +1,27 @@
 package co.edu.uniquindio.proyecto.modelo.documentos;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+@Document("categoria")
 @Getter
 @Setter
 @NoArgsConstructor
-@Document("categorias")
 public class Categoria {
-
-
     @Id
-    @EqualsAndHashCode.Include
-    private ObjectId id;
+    private String id;
+
+    @NotBlank
+    @Size(min = 3, max = 50)
     private String nombre;
-    private String icono;
 
     @Builder
-    public Categoria(String nombre, String icono) {
+    public Categoria(String nombre) {
         this.nombre = nombre;
-        this.icono = icono;
-        this.id = new ObjectId();
+        this.id = new ObjectId().toString(); // Genera el ID como String
     }
-
 }

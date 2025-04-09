@@ -1,29 +1,29 @@
 package co.edu.uniquindio.proyecto.servicios.interfaces;
 
-import co.edu.uniquindio.proyecto.dto.ReporteDTO;
+import co.edu.uniquindio.proyecto.dto.*;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 
 public interface ReporteServicio {
 
-    public static void crearReporte(ReporteDTO reporte) throws Exception{
-    }
+    void crearReporte(CrearReporteDTO crearReporteDTO) throws Exception;
+    void editarReporte(String id, EditarReporteDTO editarReporteDTO) throws Exception;
+    void eliminarReporte(String id) throws Exception;
+    ReporteDTO obtenerReportes(String id) throws Exception;
+    List<ReporteDTO> listarTodos();
+    List<ReporteDTO> listarTodos(String nombre, String ciudad,String categoria);
 
-    public static void editarReporte(ReporteDTO Reporte) throws Exception{
-    }
+    //requisito de agregar un comentario y listar comentarios
+    String agregarComentario(String idReporte, ComentarioDTO comentarioDTO) throws Exception;
+    List<ComentarioDTO> listarComentarios(String idReporte) throws Exception;
 
-    public static void eliminarReporte(String id) throws Exception{
-    }
+    //HISTORIAL REPORTE
+    List<HistorialReporteDTO> obtenerHistorial(String idReporte) throws Exception;
 
-    public static ReporteDTO obtenerReportes(String id) throws Exception{
-        return null;
-    }
+    int marcarComoImportante(String idReporte) throws Exception;
+    List<ReporteDTO> listarReportesOrdenadosPorImportancia();
 
-    public static List<ReporteDTO> listarTodos(){
-        return List.of();
-    }
-
-    List<ReporteDTO> listarTodos(String nombre, String ciudad);
 }

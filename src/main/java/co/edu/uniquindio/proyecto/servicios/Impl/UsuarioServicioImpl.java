@@ -1,24 +1,153 @@
 package co.edu.uniquindio.proyecto.servicios.Impl;
 
-import co.edu.uniquindio.proyecto.dto.UsuarioDTO;
+import co.edu.uniquindio.proyecto.dto.*;
+import co.edu.uniquindio.proyecto.mapper.UsuarioMapper;
+import co.edu.uniquindio.proyecto.modelo.documentos.Usuario;
+import co.edu.uniquindio.proyecto.modelo.enums.Ciudad;
+import co.edu.uniquindio.proyecto.modelo.enums.EstadoUsuario;
+import co.edu.uniquindio.proyecto.modelo.enums.Rol;
+import co.edu.uniquindio.proyecto.repositorios.UsuarioRepo;
+import co.edu.uniquindio.proyecto.servicios.interfaces.EmailServicio;
 import co.edu.uniquindio.proyecto.servicios.interfaces.UsuarioServicio;
 import lombok.RequiredArgsConstructor;
+import org.bson.types.ObjectId;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import org.springframework.data.mongodb.core.query.Query;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class UsuarioServicioImpl implements UsuarioServicio {
 
+    private final UsuarioRepo usuarioRepo;
+    private final UsuarioMapper usuarioMapper;
+    private final MongoTemplate mongoTemplate;
+    private final EmailServicio emailServicio;
+    private final PasswordEncoder passwordEncoder;
+
+    private final Map<String, String> codigosVerificacion = new HashMap<>();
+
+
+
     @Override
-    public List<UsuarioDTO> listarTodos() {
-        return UsuarioServicio.super.listarTodos();
+    public void crear(CrearUsuarioDTO crearUsuarioDTO) throws Exception {
+        if(existeEmail(crearUsuarioDTO.email())) {
+            throw new Exception("El correo "+crearUsuarioDTO.email()+" ya está en uso");
+        }
+
+        Usuario usuario = usuarioMapper.toDocument(crearUsuarioDTO);
+        usuario.setPassword(passwordEncoder.encode(crearUsuarioDTO.password())); // Encriptar
+
+        usuarioRepo.save(usuario);
+    }
+
+    @Override
+    public void eliminar(String id) throws Exception {
+
+        //Validamos el id
+        if (!ObjectId.isValid(id)) {
+            throw new Exception("No se encontró el usuario con el id "+id);
+        }
+
+        ObjectId objectId = new ObjectId(id);
+        Optional<Usuario> usuarioOptional = usuarioRepo.findById(objectId);
+
+        if(usuarioOptional.isEmpty()){
+            throw new Exception("No se encontró el usuario con el id "+id);
+        }
+
+        Usuario usuario = usuarioOptional.get();
+        usuario.setEstado(EstadoUsuario.ELIMINADO);
+
+        usuarioRepo.save(usuario);
+    }
+
+    @Override
+    public void editar(String id, EditarUsuarioDTO cuentaDTO) throws Exception {
+        // Validar ID
+        if (!ObjectId.isValid(id)) {
+            throw new Exception("ID inválido");
+        }
+
+        // Buscar usuario
+        Usuario usuario = usuarioRepo.findById(new ObjectId(id))
+                .orElseThrow(() -> new Exception("Usuario no encontrado"));
+
+        // Actualizar campos desde el DTO
+        usuario.setNombre(cuentaDTO.nombre());
+        usuario.setCiudad(cuentaDTO.ciudad());
+        usuario.setDireccion(cuentaDTO.direccion());
+        usuario.setTelefono(cuentaDTO.telefono());
+
+        usuarioRepo.save(usuario);
+    }
+
+
+    @Override
+    public UsuarioDTO obtener(String id) throws Exception {
+
+        //Validamos el id
+        if (!ObjectId.isValid(id)) {
+            throw new Exception("No se encontró el usuario con el id "+id);
+        }
+
+        //Buscamos el usuario que se quiere obtener
+        ObjectId objectId = new ObjectId(id);
+        Optional<Usuario> usuarioOptional = usuarioRepo.findById(objectId);
+
+        //Si no se encontró el usuario, lanzamos una excepción
+        if(usuarioOptional.isEmpty()){
+            throw new Exception("No se encontró el usuario con el id "+id);
+        }
+
+        //Retornamos el usuario encontrado convertido a DTO
+        return usuarioMapper.toDTO(usuarioOptional.get());
+
     }
 
     @Override
     public List<UsuarioDTO> listarTodos(String nombre, String ciudad, int pagina) {
-        return List.of();
+
+        if (pagina < 0) {
+            throw new IllegalArgumentException("La página no puede ser menor a 0");
+        }
+
+        Criteria criteria = new Criteria();
+
+        // Búsqueda parcial con regex (ej: "jua" encuentra "Juan")
+        if (nombre != null && !nombre.isEmpty()) {
+            criteria.and("nombre").regex(".*" + nombre + ".*", "i");
+        }
+
+        if (ciudad != null && !ciudad.isEmpty()) {
+            criteria.and("ciudad").regex(".*" + ciudad + ".*", "i");
+        }
+
+        Query query = new Query(criteria).with(PageRequest.of(pagina, 5));
+
+        // Corrección: Usuario.class como parámetro
+        List<Usuario> usuarios = mongoTemplate.find(query, Usuario.class);
+
+        return usuarios.stream()
+                .map(usuarioMapper::toDTO)
+                .toList();
     }
+
+
+    private boolean existeEmail(String email) {
+        return usuarioRepo.findByEmail(email).isPresent();
+    }
+
 }
 
