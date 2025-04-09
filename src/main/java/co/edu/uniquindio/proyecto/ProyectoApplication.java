@@ -20,6 +20,11 @@ public class ProyectoApplication {
         SpringApplication.run(ProyectoApplication.class, args);
     }
 
+    /**
+     * se ejecuta cada vez que se inicia la aplicacion
+     * Fue usado para verificar la conexion entre el proyecto backend y la BD mongo
+     * @param usuarioRepository
+     * @return
 
     @Bean
     CommandLineRunner init(UsuarioRepo usuarioRepository) {
@@ -40,7 +45,7 @@ public class ProyectoApplication {
             System.out.println("✅ Usuario insertado en MongoDB");
         };
     }
-
+     */
 
 
 

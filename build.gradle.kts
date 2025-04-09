@@ -43,7 +43,9 @@ dependencies {
 
     implementation("org.springframework.boot:spring-boot-starter-websocket")
 
+    implementation ("org.springframework.boot:spring-boot-starter-mail")
     implementation("org.simplejavamail:simple-java-mail:8.12.5")
+
     implementation("org.simplejavamail:batch-module:8.12.5")
 
     //IMPLEMENTACIONES GUIA 11
