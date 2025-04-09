@@ -4,6 +4,7 @@ import co.edu.uniquindio.proyecto.dto.CategoriaDTO;
 import co.edu.uniquindio.proyecto.dto.CrearCategoriaDTO;
 import co.edu.uniquindio.proyecto.dto.MensajeDTO;
 import co.edu.uniquindio.proyecto.servicios.interfaces.CategoriaServicio;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ public class CategoriaControlador {
 
     private final CategoriaServicio categoriaServicio;
 
+    @Operation(summary = "Crear una categoria")
     @PostMapping
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<MensajeDTO<String>> crearCategoria(@Valid @RequestBody CrearCategoriaDTO crearCategoriaDTO) throws Exception {
@@ -29,6 +31,7 @@ public class CategoriaControlador {
         );
     }
 
+    @Operation(summary = "Editar una categoria")
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<MensajeDTO<String>> actualizarCategoria(
@@ -40,6 +43,7 @@ public class CategoriaControlador {
         );
     }
 
+    @Operation(summary = "ELiminar una categoria")
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<MensajeDTO<String>> eliminarCategoria(@PathVariable String id) throws Exception {
@@ -49,6 +53,7 @@ public class CategoriaControlador {
         );
     }
 
+    @Operation(summary = "Obtener categoria")
     @GetMapping("/{id}")
     public ResponseEntity<MensajeDTO<CategoriaDTO>> obtenerCategoria(@PathVariable String id) throws Exception {
         return ResponseEntity.ok().body(
@@ -56,6 +61,7 @@ public class CategoriaControlador {
         );
     }
 
+    @Operation(summary = "Listar todas las categorias")
     @GetMapping
     public ResponseEntity<MensajeDTO<List<CategoriaDTO>>> listarCategorias(
             @RequestParam(required = false) String nombre,

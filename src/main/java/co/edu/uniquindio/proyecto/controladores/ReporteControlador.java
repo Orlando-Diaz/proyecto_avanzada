@@ -68,7 +68,8 @@ public class ReporteControlador {
         );
     }
 
-    @PostMapping("/{idReporte}/comentarios")
+    @Operation(summary = "Agregar un comentario al reporte")
+    @PostMapping("/{id}/comentarios")
     public ResponseEntity<MensajeDTO<String>> agregarComentario(
             @PathVariable String idReporte,
             @Valid @RequestBody ComentarioDTO comentarioDTO) throws Exception {
@@ -77,7 +78,8 @@ public class ReporteControlador {
         return ResponseEntity.ok().body(new MensajeDTO<>(false, idComentario));
     }
 
-    @GetMapping("/{idReporte}/comentarios")
+    @Operation(summary = "Listar los comentarios de un reporte")
+    @GetMapping("/{id}/comentarios")
     public ResponseEntity<MensajeDTO<List<ComentarioDTO>>> listarComentarios(
             @PathVariable String idReporte) throws Exception {
         List<ComentarioDTO> comentarios = reporteServicio.listarComentarios(idReporte);
@@ -101,6 +103,7 @@ public class ReporteControlador {
     }
 
 
+    @Operation(summary = "Marcar un reporte como importante")
     @PostMapping("/{id}/importante")
     public ResponseEntity<RespuestaImportanciaDTO> marcarImportante(
             @PathVariable String id) {
@@ -126,6 +129,7 @@ public class ReporteControlador {
         }
     }
 
+    @Operation(summary = "Listar reportes por importancia")
     @GetMapping("/ordenados-importancia")
     public ResponseEntity<List<ReporteDTO>> listarReportesPorImportancia() {
         try {
