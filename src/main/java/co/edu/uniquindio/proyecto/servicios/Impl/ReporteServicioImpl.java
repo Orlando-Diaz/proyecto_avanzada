@@ -340,17 +340,29 @@ public class ReporteServicioImpl implements ReporteServicio {
         String observacion = "Estado cambiado de " + reporte.getEstadoActual() + " a " + nuevoEstado
                 + " por usuario: " + idUsuario + ". Motivo: " + motivo;
 
-        // Aquí podrías tener una lista de historial de cambios si la entidad lo permite
-        // reporte.getHistorialEstados().add(new HistorialEstado(...));
 
-        // Actualizar el estado y la fecha de modificación
+        // Construir historial del cambio
+        Map<String, String> cambios = new HashMap<>();
+        cambios.put("estadoAnterior", reporte.getEstadoActual().name());
+        cambios.put("estadoNuevo", nuevoEstado.name());
+
+        HistorialReporte historial = HistorialReporte.builder()
+                .observaciones(observacion)
+                .estado(nuevoEstado)
+                .fecha(LocalDateTime.now())
+                .cambios(cambios)
+                .build();
+
+        // Actualizar el estado actual del reporte
         reporte.setEstadoActual(nuevoEstado);
-        reporte.setFecha(LocalDateTime.now());
 
-        // Persistir cambios
+        // Agregar al historial del reporte
+        reporte.getHistorial().add(historial);
+
+        // Guardar el reporte actualizado
         reporteRepo.save(reporte);
 
-        return "✅ Estado del reporte actualizado correctamente: " + nuevoEstado;
+        return "Estado del reporte actualizado a: " + nuevoEstado;
 
     }
 
