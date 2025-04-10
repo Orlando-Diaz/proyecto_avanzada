@@ -1,5 +1,7 @@
 package co.edu.uniquindio.proyecto.servicios.interfaces;
 
+import co.edu.uniquindio.proyecto.dto.EmailDTO;
+import co.edu.uniquindio.proyecto.dto.NotificacionDTO;
 import co.edu.uniquindio.proyecto.modelo.documentos.Notificacion;
 import org.bson.types.ObjectId;
 
@@ -7,16 +9,15 @@ import java.util.List;
 
 public interface NotificacionServicio {
 
-    // Métodos para gestionar notificaciones
-    Notificacion crearNotificacion(Notificacion notificacion);
+    NotificacionDTO crearNotificacion(NotificacionDTO notificacionDTO);
 
-    void enviarNotificacionFirebase(ObjectId usuarioId, String titulo, String mensaje, ObjectId reporteId);
+    void enviarNotificacionPorWebSocket(NotificacionDTO notificacion);
 
-    void enviarNotificacionEmail(String email, String asunto, String mensaje);
+    void enviarCorreoElectronico(EmailDTO emailDTO);
 
-    List<Notificacion> listarNotificacionesUsuario(ObjectId usuarioId);
+    List<NotificacionDTO> listarNotificacionesPorUsuario(String idUsuario);
 
-    Notificacion marcarNotificacionComoLeida(ObjectId notificacionId);
+    void marcarNotificacionComoLeida(String idNotificacion);
 
-    void eliminarNotificacion(ObjectId notificacionId);
+    List<NotificacionDTO> listarNotificacionesNoLeidas(String idUsuario);
 }

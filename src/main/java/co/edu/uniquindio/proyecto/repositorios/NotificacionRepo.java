@@ -10,10 +10,11 @@ import java.util.List;
 @Repository
 public interface NotificacionRepo extends MongoRepository<Notificacion, ObjectId> {
 
-    List<Notificacion> findByIdUsuarioOrderByFechaDesc(ObjectId idUsuario);
+    List<Notificacion> findByIdUsuario(ObjectId idUsuario);
 
-    List<Notificacion> findByIdUsuarioAndLeidaOrderByFechaDesc(ObjectId idUsuario, boolean leida);
+    List<Notificacion> findByIdUsuarioAndLeida(ObjectId idUsuario, boolean leida);
 
+    List<Notificacion> findByReporteId(ObjectId reporteId);
 
 
 }

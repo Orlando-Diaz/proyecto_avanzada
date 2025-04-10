@@ -10,7 +10,10 @@ public record NotificacionDTO(
         String tipo,
         boolean leida,
         String reporteId,
-        String usuarioId,
+        String idUsuario,
         String titulo
 ) {
+    public NotificacionDTO withFechaActual() {
+        return fecha == null ? new NotificacionDTO(id, mensaje, LocalDateTime.now(), tipo, leida, reporteId, idUsuario, titulo) : this;
+    }
 }
