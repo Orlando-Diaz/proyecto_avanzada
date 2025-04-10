@@ -45,12 +45,16 @@ dependencies {
 
     implementation("org.simplejavamail:simple-java-mail:8.12.5")
     implementation("org.simplejavamail:batch-module:8.12.5")
+    implementation ("org.springframework.boot:spring-boot-starter-mail")
 
     //IMPLEMENTACIONES GUIA 11
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("io.jsonwebtoken:jjwt-api:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
+
+    //Implementacion de Firebase
+    implementation("com.google.firebase:firebase-admin:9.4.3")
 
 
 }

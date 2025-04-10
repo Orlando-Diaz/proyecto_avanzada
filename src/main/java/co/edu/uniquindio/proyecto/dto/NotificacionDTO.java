@@ -1,8 +1,16 @@
 package co.edu.uniquindio.proyecto.dto;
 
+
+import java.time.LocalDateTime;
+
 public record NotificacionDTO(
-        String titulo,
-        String cuerpo,
-        String topic
+        String id,
+        String mensaje,
+        LocalDateTime fecha,
+        String tipo,
+        boolean leida,
+        String reporteId,
+        String usuarioId,
+        String titulo
 ) {
 }
