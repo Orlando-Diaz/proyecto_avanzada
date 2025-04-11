@@ -66,25 +66,28 @@ public class UsuarioServicioImpl implements UsuarioServicio {
 
     /**
      * Metodo que modifica el estado de un usuario
-     * @param idUsuario
-     * @param estadoUsuario
+     * @param idUsuario Usuario al que se le modificara el estado
+     * @param estadoUsuarioDTO ACTIVO/INACTIVO/ELIMINADO
      * @throws Exception
      */
-    @Override
-    public void modificarEstadoCuentaUsuario(String idUsuario, EstadoUsuario estadoUsuario) throws Exception {
+    public void modificarEstadoCuentaUsuario(String idUsuario, EstadoUsuarioDTO estadoUsuarioDTO) throws Exception {
         Usuario usuario = usuarioRepo.findById(new ObjectId(idUsuario))
                 .orElseThrow(() -> new UsuarioInexistente("Usuario no encontrado"));
 
+        if (estadoUsuarioDTO.nuevoEstado()==null){
+            throw new EstadoCuentaInvalidoException("ERROR. ESTADO NULL");
+        }
+
         //Validar que su estado actual no sea ELIMINADO
         if (usuario.getEstado().equals(EstadoUsuario.ELIMINADO)) {
-            throw new Exception("ERROR: EL USUARIO "+usuario.getEmail()+" YA HA SIDO ELIMINADO");
+            throw new Exception("ERROR: EL USUARIO "+usuario.getEmail()+" YA HA SIDO ELIMINADO PREVIAMENTE");
         }
 
         //Validar que el estado actual del usuario sea distinto al que llega por parametro
-        if (usuario.getEstado().equals(estadoUsuario)) {
+        if (usuario.getEstado().equals(estadoUsuarioDTO.nuevoEstado())) {
             throw new Exception("ERROR: EL USUARIO "+usuario.getEmail()+" YA HA TIENE EL ESTADO A MODIFICAR");
         }
-        usuario.setEstado(estadoUsuario);
+        usuario.setEstado(estadoUsuarioDTO.nuevoEstado());
 
         usuarioRepo.save(usuario);
     }

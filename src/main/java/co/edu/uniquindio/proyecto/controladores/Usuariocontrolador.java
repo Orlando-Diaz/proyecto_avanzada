@@ -130,7 +130,7 @@ public class Usuariocontrolador {
             @PathVariable String id,
             @RequestBody EstadoUsuarioDTO estadoDTO) throws Exception {
 
-        usuarioServicio.modificarEstadoCuentaUsuario(id, estadoDTO.nuevoEstado());
+        usuarioServicio.modificarEstadoCuentaUsuario(id, estadoDTO);
         return ResponseEntity.ok(new MensajeDTO<>(false, "Estado actualizado correctamente"));
     }
 

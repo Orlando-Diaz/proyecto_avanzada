@@ -1,9 +1,6 @@
 package co.edu.uniquindio.proyecto.servicios.interfaces;
 
-import co.edu.uniquindio.proyecto.dto.CambiarPasswordDTO;
-import co.edu.uniquindio.proyecto.dto.CrearUsuarioDTO;
-import co.edu.uniquindio.proyecto.dto.EditarUsuarioDTO;
-import co.edu.uniquindio.proyecto.dto.UsuarioDTO;
+import co.edu.uniquindio.proyecto.dto.*;
 import co.edu.uniquindio.proyecto.modelo.enums.EstadoUsuario;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +10,7 @@ public interface UsuarioServicio {
 
     void crear(CrearUsuarioDTO crearUsuarioDTO) throws Exception;
 
-    void modificarEstadoCuentaUsuario(String idUsuario, EstadoUsuario estadoCuentaUsuario) throws Exception;
+    void modificarEstadoCuentaUsuario(String idUsuario, EstadoUsuarioDTO estadoCuentaUsuario) throws Exception;
 
     void verificarCodigoUsuario(String idUsuario, String codigo) throws Exception;
 
