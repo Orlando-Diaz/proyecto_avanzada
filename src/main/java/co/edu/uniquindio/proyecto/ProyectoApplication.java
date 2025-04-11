@@ -33,7 +33,7 @@ public class ProyectoApplication {
                     .nombre("Salomé")
                     .ciudad(Ciudad.ARMENIA) // Usa uno válido de tu enum
                     .direccion("Calle 123")
-                    .email("salome@correo.com")
+                    .email("salome@email.com")
                     .telefono("1234567890")
                     .password("claveSegura")
                     .rol(Rol.ADMINISTRADOR) // Usa un valor real de tu enum
