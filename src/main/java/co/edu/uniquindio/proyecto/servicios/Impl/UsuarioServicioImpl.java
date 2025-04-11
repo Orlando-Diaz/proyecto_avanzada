@@ -1,9 +1,7 @@
 package co.edu.uniquindio.proyecto.servicios.Impl;
 
 import co.edu.uniquindio.proyecto.dto.*;
-import co.edu.uniquindio.proyecto.excepciones.CorreoEnUsoException;
-import co.edu.uniquindio.proyecto.excepciones.UsuarioInexistente;
-import co.edu.uniquindio.proyecto.excepciones.CodigoVerificacionNoCoincideException;
+import co.edu.uniquindio.proyecto.excepciones.*;
 import co.edu.uniquindio.proyecto.mapper.UsuarioMapper;
 import co.edu.uniquindio.proyecto.modelo.documentos.Usuario;
 import co.edu.uniquindio.proyecto.modelo.enums.EstadoUsuario;
@@ -87,11 +85,13 @@ public class UsuarioServicioImpl implements UsuarioServicio {
             throw new Exception("ERROR: EL USUARIO "+usuario.getEmail()+" YA HA TIENE EL ESTADO A MODIFICAR");
         }
         usuario.setEstado(estadoUsuario);
+
+        usuarioRepo.save(usuario);
     }
 
     /**
      * Verifica si el código ingresado por el usuario es correcto y aún está dentro del tiempo permitido (15 minutos).
-     *
+     * Si ambas condiciones se cumplen, la cuenta queda activa, de lo conntrario lanza una excepcion
      * @param idUsuario ID del usuario a verificar.
      * @param codigo Código ingresado por el usuario.
      * @return true si el código es válido y vigente.
@@ -99,7 +99,7 @@ public class UsuarioServicioImpl implements UsuarioServicio {
      * @throws CodigoVerificacionNoCoincideException si el código no coincide con el registrado.
      */
     @Override
-    public boolean verificarCodigoUsuario(String idUsuario, String codigo) throws Exception {
+    public void verificarCodigoUsuario(String idUsuario, String codigo) throws Exception {
         Usuario usuario = usuarioRepo.findById(new ObjectId(idUsuario))
                 .orElseThrow(() -> new UsuarioInexistente("Usuario no encontrado en el sistema"));
 
@@ -108,16 +108,21 @@ public class UsuarioServicioImpl implements UsuarioServicio {
             throw new CodigoVerificacionNoCoincideException("ERROR. El código ingresado no es correcto");
         }
 
+
         // Validar que no hayan pasado más de 15 minutos desde que se generó el código
         LocalDateTime ahora = LocalDateTime.now();
         LocalDateTime fechaGeneracion = usuario.getFechaCodigoValidacion();
 
         Duration duracion = Duration.between(fechaGeneracion, ahora);
         if (duracion.toMinutes() > 15) {
-            return false; // código expirado
+            throw new CodigoExpiradoException("ERROR. EL CODIGO YA HA EXPIRADO"); // código expirado
         }
 
-        return true; // código válido y vigente
+        if (usuario.getEstado().equals(EstadoUsuario.ACTIVO)){
+            throw new EstadoCuentaInvalidoException("ERROR. LA CUENTA YA HA SIDO ACTIVADA");
+        }
+        usuario.setEstado(EstadoUsuario.ACTIVO); // código válido y vigente
+        usuarioRepo.save(usuario);
     }
 
     /**

@@ -15,7 +15,7 @@ public interface UsuarioServicio {
 
     void modificarEstadoCuentaUsuario(String idUsuario, EstadoUsuario estadoCuentaUsuario) throws Exception;
 
-    boolean verificarCodigoUsuario(String idUsuario, String codigo) throws Exception;
+    void verificarCodigoUsuario(String idUsuario, String codigo) throws Exception;
 
     void eliminar(String id) throws Exception;
     void editar(String id, EditarUsuarioDTO cuenta) throws Exception;
