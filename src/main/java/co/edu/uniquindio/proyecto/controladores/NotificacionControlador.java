@@ -1,9 +1,7 @@
 package co.edu.uniquindio.proyecto.controladores;
 
-import co.edu.uniquindio.proyecto.dto.EmailDTO;
-import co.edu.uniquindio.proyecto.dto.MensajeDTO;
+import co.edu.uniquindio.proyecto.dto.EnviarCorreoDTO;
 import co.edu.uniquindio.proyecto.dto.NotificacionDTO;
-import co.edu.uniquindio.proyecto.modelo.documentos.Notificacion;
 import co.edu.uniquindio.proyecto.servicios.interfaces.NotificacionServicio;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -91,7 +89,7 @@ public class NotificacionControlador {
             }
     )
     @PostMapping("/enviar-correo")
-    public ResponseEntity<Void> enviarCorreo(@RequestBody EmailDTO emailDTO) {
+    public ResponseEntity<Void> enviarCorreo(@RequestBody EnviarCorreoDTO emailDTO) {
         notificacionServicio.enviarCorreoElectronico(emailDTO);
         return ResponseEntity.ok().build();
     }

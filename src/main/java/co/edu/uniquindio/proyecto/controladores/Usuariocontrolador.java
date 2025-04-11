@@ -1,9 +1,6 @@
 package co.edu.uniquindio.proyecto.controladores;
 
-import co.edu.uniquindio.proyecto.dto.CrearUsuarioDTO;
-import co.edu.uniquindio.proyecto.dto.EditarUsuarioDTO;
-import co.edu.uniquindio.proyecto.dto.MensajeDTO;
-import co.edu.uniquindio.proyecto.dto.UsuarioDTO;
+import co.edu.uniquindio.proyecto.dto.*;
 import co.edu.uniquindio.proyecto.servicios.interfaces.UsuarioServicio;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,7 +30,7 @@ public class Usuariocontrolador {
             responses = {
                     @ApiResponse(responseCode = "200", description = "Usuario creado exitosamente"),
                     @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
-                    @ApiResponse(responseCode = "409", description = "El correo electrónico ya está registrado")
+                    @ApiResponse(responseCode = "409", description = "El email electrónico ya está registrado")
             }
     )
     @PostMapping
@@ -117,4 +114,81 @@ public class Usuariocontrolador {
         usuarioServicio.editar(id, cuenta);
         return ResponseEntity.ok(new MensajeDTO<>(false, "Cuenta editada exitosamente"));
     }
+
+    @Operation(
+            summary = "Cambiar estado de un usuario",
+            description = "Permite actualizar el estado de un usuario (ACTIVO, INACTIVO, ELIMINADO)",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Estado cambiado correctamente"),
+                    @ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
+                    @ApiResponse(responseCode = "400", description = "Estado inválido")
+            }
+    )
+    @PutMapping("/{id}/cambiarEstadoUsuario")
+    public ResponseEntity<MensajeDTO<String>> cambiarEstadoUsuario(
+            @Parameter(description = "ID del usuario")
+            @PathVariable String id,
+            @RequestBody EstadoUsuarioDTO estadoDTO) throws Exception {
+
+        usuarioServicio.modificarEstadoCuentaUsuario(id, estadoDTO);
+        return ResponseEntity.ok(new MensajeDTO<>(false, "Estado actualizado correctamente"));
+    }
+
+
+    @Operation(
+            summary = "Verificar el código de un usuario",
+            description = "Verifica que el código ingresado por el usuario sea válido y no haya expirado. Si es correcto, activa la cuenta.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Cuenta activada correctamente"),
+                    @ApiResponse(responseCode = "404", description = "Usuario no encontrado"),
+                    @ApiResponse(responseCode = "400", description = "Código inválido o expirado")
+            }
+    )
+    @PutMapping("/{id}/verificarCodigoCuentaUsuario")
+    public ResponseEntity<MensajeDTO<String>> verificarCodigoUsuario(
+            @Parameter(description = "ID del usuario")
+            @PathVariable String id,
+            @RequestBody CodigoDTO codigoDTO) throws Exception {
+
+        usuarioServicio.verificarCodigoActivarUsuario(id, codigoDTO.codigo());
+        return ResponseEntity.ok(new MensajeDTO<>(false, "Cuenta activada correctamente"));
+    }
+
+    @Operation(
+            summary = "Solicitar código de recuperación de contraseña",
+            description = "Envía un código al correo del usuario activo registrado para permitir la recuperación de contraseña",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Código enviado correctamente"),
+                    @ApiResponse(responseCode = "404", description = "Correo no registrado"),
+                    @ApiResponse(responseCode = "400", description = "Usuario con estado inválido")
+            }
+    )
+    @PostMapping("/recuperarContrasenia")
+    public ResponseEntity<MensajeDTO<String>> recuperarContrasenia(
+            @RequestBody RecuperarContraseniaDTO recuperarPasswordDTO) throws Exception {
+
+        usuarioServicio.recuperarContrasenia(recuperarPasswordDTO);
+        return ResponseEntity.ok(new MensajeDTO<>(false, "Código enviado correctamente al correo"));
+    }
+
+
+    @Operation(
+            summary = "Cambiar contraseña del usuario",
+            description = "Valida el código enviado por correo y actualiza la contraseña del usuario si el código es válido",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Contraseña actualizada correctamente"),
+                    @ApiResponse(responseCode = "400", description = "Código incorrecto o expirado"),
+                    @ApiResponse(responseCode = "404", description = "Usuario no encontrado")
+            }
+    )
+    @PutMapping("/cambiarContrasenia")
+    public ResponseEntity<MensajeDTO<String>> cambiarContrasenia(
+            @RequestBody CambiarPasswordDTO cambiarPasswordDTO) throws Exception {
+
+        usuarioServicio.cambiarContrasenia(cambiarPasswordDTO);
+        return ResponseEntity.ok(new MensajeDTO<>(false, "Contraseña actualizada correctamente"));
+    }
+
+
+
 }

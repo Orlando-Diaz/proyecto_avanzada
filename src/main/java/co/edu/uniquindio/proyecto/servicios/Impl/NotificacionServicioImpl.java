@@ -1,6 +1,6 @@
 package co.edu.uniquindio.proyecto.servicios.Impl;
 
-import co.edu.uniquindio.proyecto.dto.EmailDTO;
+import co.edu.uniquindio.proyecto.dto.EnviarCorreoDTO;
 import co.edu.uniquindio.proyecto.dto.NotificacionDTO;
 import co.edu.uniquindio.proyecto.mapper.NotificacionMapper;
 import co.edu.uniquindio.proyecto.modelo.documentos.Notificacion;
@@ -70,7 +70,7 @@ public class NotificacionServicioImpl implements NotificacionServicio {
     }
 
     @Override
-    public void enviarCorreoElectronico(EmailDTO emailDTO) {
+    public void enviarCorreoElectronico(EnviarCorreoDTO emailDTO) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(emailDTO.destinatario());
         message.setSubject(emailDTO.asunto());
