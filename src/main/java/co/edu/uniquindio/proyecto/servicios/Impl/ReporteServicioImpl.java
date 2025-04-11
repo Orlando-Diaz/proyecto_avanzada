@@ -315,5 +315,56 @@ public class ReporteServicioImpl implements ReporteServicio {
                 .collect(Collectors.toList());
     }
 
+    //  Agregado 1:15 am 04-08-2025
+    @Override
+    public String editarEstadoReporte(String idReporte, String idUsuario, String motivo, EstadoReporteDTO estadoReporteDTO) throws Exception {
+
+        // Buscar el reporte
+        Reporte reporte = reporteRepo.findById(new ObjectId(idReporte))
+                .orElseThrow(() -> new Exception("Reporte no encontrado"));
+
+        // Obtener el nuevo estado
+        EstadoReporte nuevoEstado = EstadoReporte.valueOf(estadoReporteDTO.estado());
+
+        // Validar que el nuevo estado sea diferente al actual
+        if (reporte.getEstadoActual() == nuevoEstado) {
+            throw new Exception("El reporte ya tiene el estado: " + nuevoEstado);
+        }
+
+        // Si el reporte está eliminado, no se permite cambiar el estado
+        if (reporte.getEstadoActual() == EstadoReporte.ELIMINADO) {
+            throw new Exception("No se puede cambiar el estado de un reporte eliminado");
+        }
+
+        // Registrar motivo y responsable (esto depende de tu diseño, aquí un ejemplo sencillo)
+        String observacion = "Estado cambiado de " + reporte.getEstadoActual() + " a " + nuevoEstado
+                + " por usuario: " + idUsuario + ". Motivo: " + motivo;
+
+
+        // Construir historial del cambio
+        Map<String, String> cambios = new HashMap<>();
+        cambios.put("estadoAnterior", reporte.getEstadoActual().name());
+        cambios.put("estadoNuevo", nuevoEstado.name());
+
+        HistorialReporte historial = HistorialReporte.builder()
+                .observaciones(observacion)
+                .estado(nuevoEstado)
+                .fecha(LocalDateTime.now())
+                .cambios(cambios)
+                .build();
+
+        // Actualizar el estado actual del reporte
+        reporte.setEstadoActual(nuevoEstado);
+
+        // Agregar al historial del reporte
+        reporte.getHistorial().add(historial);
+
+        // Guardar el reporte actualizado
+        reporteRepo.save(reporte);
+
+        return "Estado del reporte actualizado a: " + nuevoEstado;
+
+    }
+
 
 }

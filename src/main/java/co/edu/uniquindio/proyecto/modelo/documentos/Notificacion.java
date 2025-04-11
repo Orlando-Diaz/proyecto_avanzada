@@ -33,5 +33,6 @@ public class Notificacion {
         this.id = id;
         this.reporteId = reporteId;
         this.idUsuario = idUsuario;
+        this.leida = false;
     }
 }

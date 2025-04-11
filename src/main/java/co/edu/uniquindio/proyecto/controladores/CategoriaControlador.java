@@ -4,7 +4,6 @@ import co.edu.uniquindio.proyecto.dto.CategoriaDTO;
 import co.edu.uniquindio.proyecto.dto.CrearCategoriaDTO;
 import co.edu.uniquindio.proyecto.dto.MensajeDTO;
 import co.edu.uniquindio.proyecto.servicios.interfaces.CategoriaServicio;
-import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,8 +20,7 @@ public class CategoriaControlador {
 
     private final CategoriaServicio categoriaServicio;
 
-    @Operation(summary = "Crear una categoria")
-    @PostMapping
+    @PostMapping("/crear/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<MensajeDTO<String>> crearCategoria(@Valid @RequestBody CrearCategoriaDTO crearCategoriaDTO) throws Exception {
         categoriaServicio.crear(crearCategoriaDTO);
@@ -31,8 +29,7 @@ public class CategoriaControlador {
         );
     }
 
-    @Operation(summary = "Editar una categoria")
-    @PutMapping("/{id}")
+    @PutMapping("/actualizar/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<MensajeDTO<String>> actualizarCategoria(
             @PathVariable String id,
@@ -43,8 +40,7 @@ public class CategoriaControlador {
         );
     }
 
-    @Operation(summary = "ELiminar una categoria")
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/eliminar/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<MensajeDTO<String>> eliminarCategoria(@PathVariable String id) throws Exception {
         categoriaServicio.eliminar(id);
@@ -53,16 +49,14 @@ public class CategoriaControlador {
         );
     }
 
-    @Operation(summary = "Obtener categoria")
-    @GetMapping("/{id}")
+    @GetMapping("/obtener/{id}")
     public ResponseEntity<MensajeDTO<CategoriaDTO>> obtenerCategoria(@PathVariable String id) throws Exception {
         return ResponseEntity.ok().body(
                 new MensajeDTO<>(false, categoriaServicio.obtener(id))
         );
     }
 
-    @Operation(summary = "Listar todas las categorias ")
-    @GetMapping
+    @GetMapping("/listar")
     public ResponseEntity<MensajeDTO<List<CategoriaDTO>>> listarCategorias(
             @RequestParam(required = false) String nombre,
             @RequestParam(defaultValue = "0") int pagina) {
