@@ -35,18 +35,14 @@ public class AuthServicioImpl implements AuthServicio {
                 .orElseThrow(() -> new Exception("ERROR: CORREO NO ENCONTRADO EN EL SISTEMA"));
 
         // 2. VERIFICAR SI EL CORREO O LA CONTRASENIA SEAN INCORRECTOS PARA LANZAR UNA EXCEPCION
-        if (!(usuario.getEmail().equals(loginDTO.correo()))||!(passwordEncoder.matches(loginDTO.password(), usuario.getPassword()))) {
-            System.out.println("Paso por aca");
-            System.out.println(usuario.getEmail());
-            System.out.println(loginDTO.correo());
-            System.out.println(usuario.getPassword());
-            System.out.println(passwordEncoder.matches(loginDTO.password(), usuario.getPassword()));
-            throw new Exception("ERROR: CREDENCIALES INCORRECTAS");
+        if (!passwordEncoder.matches(loginDTO.password(), usuario.getPassword())) {
+            System.out.println("pasa");
+            throw new CredencialesInvalidasException("ERROR: CREDENCIALES INCORRECTAS");
         }
 
         // 3.VERIFICAR CREDENCIALES CORRECTA Y EL ESTADO DE LA CUENTA
         if (usuario.getEmail().equals(loginDTO.correo())&&passwordEncoder.matches(loginDTO.password(), usuario.getPassword())){//&&usuario.getEstado().equals(EstadoUsuario.INACTIVO)) {
-            System.out.println("Paso por aca 2");
+
             //SINO ESTADOCUENTA!=INACTIVO NO SE PIDE CODIGO PORQUE LA CUENTA YA FUE ACTIVADA
             if (usuario.getEstado().equals(EstadoUsuario.ACTIVO)){
 
@@ -63,7 +59,6 @@ public class AuthServicioImpl implements AuthServicio {
                 throw new EstadoCuentaInvalidoException("ERROR. ESTADO DE LA CUENTA INVALIDO");
             }
         }{
-            System.out.println("Aca esta dando error");
             throw new CredencialesInvalidasException("ERROR: CREDENCIALES INCORRECTAS PARA INICIAR SESION");
         }
     }

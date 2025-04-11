@@ -56,7 +56,7 @@ public class CategoriaControlador {
         );
     }
 
-    @GetMapping("/listar/{id}")
+    @GetMapping("/listar")
     public ResponseEntity<MensajeDTO<List<CategoriaDTO>>> listarCategorias(
             @RequestParam(required = false) String nombre,
             @RequestParam(defaultValue = "0") int pagina) {
