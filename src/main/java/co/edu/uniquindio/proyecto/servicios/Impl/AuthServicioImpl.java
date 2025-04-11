@@ -35,12 +35,13 @@ public class AuthServicioImpl implements AuthServicio {
                 .orElseThrow(() -> new Exception("ERROR: CORREO NO ENCONTRADO EN EL SISTEMA"));
 
         // 2. VERIFICAR SI EL CORREO O LA CONTRASENIA SEAN INCORRECTOS PARA LANZAR UNA EXCEPCION
-        if (!(usuario.getEmail().equals(loginDTO.correo()))||!(usuario.getPassword().equals(passwordEncoder.encode(loginDTO.password())))) {
-            throw new Exception("ERROR: CREDENCIALES INCORRECTAS");
+        if (!passwordEncoder.matches(loginDTO.password(), usuario.getPassword())) {
+            System.out.println("pasa");
+            throw new CredencialesInvalidasException("ERROR: CREDENCIALES INCORRECTAS");
         }
 
         // 3.VERIFICAR CREDENCIALES CORRECTA Y EL ESTADO DE LA CUENTA
-        if (usuario.getEmail().equals(loginDTO.correo())&&usuario.getPassword().equals(passwordEncoder.encode(loginDTO.password()))){//&&usuario.getEstado().equals(EstadoUsuario.INACTIVO)) {
+        if (usuario.getEmail().equals(loginDTO.correo())&&passwordEncoder.matches(loginDTO.password(), usuario.getPassword())){//&&usuario.getEstado().equals(EstadoUsuario.INACTIVO)) {
 
             //SINO ESTADOCUENTA!=INACTIVO NO SE PIDE CODIGO PORQUE LA CUENTA YA FUE ACTIVADA
             if (usuario.getEstado().equals(EstadoUsuario.ACTIVO)){
