@@ -4,6 +4,6 @@ import co.edu.uniquindio.proyecto.dto.EnviarCorreoDTO;
 
 public interface EmailServicio {
 
-    //void enviarCorreo(EnviarCorreoDTO emailDTO) throws Exception;
+    void enviarCorreo(EnviarCorreoDTO emailDTO) throws Exception;
 
 }

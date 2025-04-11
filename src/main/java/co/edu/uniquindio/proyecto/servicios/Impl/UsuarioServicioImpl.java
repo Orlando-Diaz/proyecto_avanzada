@@ -8,16 +8,12 @@ import co.edu.uniquindio.proyecto.modelo.enums.EstadoUsuario;
 import co.edu.uniquindio.proyecto.repositorios.UsuarioRepo;
 import co.edu.uniquindio.proyecto.servicios.interfaces.EmailServicio;
 import co.edu.uniquindio.proyecto.servicios.interfaces.UsuarioServicio;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
-import org.hibernate.validator.constraints.Length;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -47,15 +43,22 @@ public class UsuarioServicioImpl implements UsuarioServicio {
     @Override
     public void crear(CrearUsuarioDTO crearUsuarioDTO) throws Exception {
         if(existeEmail(crearUsuarioDTO.email())) {
-            throw new CorreoEnUsoException("El correo "+crearUsuarioDTO.email()+" ya está en uso");
+            throw new CorreoEnUsoException("El email "+crearUsuarioDTO.email()+" ya está en uso");
         }
 
         Usuario usuario = usuarioMapper.toDocument(crearUsuarioDTO);
         usuario.setEstado(EstadoUsuario.INACTIVO);
         usuario.setPassword(passwordEncoder.encode(crearUsuarioDTO.password())); // Encriptar
 
-        //Se asigna el codigo de validacion y se envia al correo del usuario
-        usuario.setCodigoValidacion(enviarCodigo(crearUsuarioDTO.email()));
+
+        String codigo=generarCodigo();
+
+        //Se asigna el codigo de validacion y se envia al email del usuario
+        usuario.setCodigoValidacion(codigo);
+
+        emailServicio.enviarCorreo(new EnviarCorreoDTO(crearUsuarioDTO.email(),"RECUPERACION",
+                "CODIGO DE RECUPERACION DE CONTRASENIA "+codigo));
+
         usuario.setFechaCodigoValidacion(LocalDateTime.now()); //FECHA CODIGO DE VALIDACION. SERA USADO PARA VALIDAR 15 MIN DE VALIDEZ
 
         usuario.setFechaRegistro(LocalDateTime.now()); //FECHA DE REGISTRO DE LA CUENTA
@@ -102,7 +105,7 @@ public class UsuarioServicioImpl implements UsuarioServicio {
      * @throws CodigoVerificacionNoCoincideException si el código no coincide con el registrado.
      */
     @Override
-    public void verificarCodigoUsuario(String idUsuario, String codigo) throws Exception {
+    public void verificarCodigoActivarUsuario(String idUsuario, String codigo) throws Exception {
         Usuario usuario = usuarioRepo.findById(new ObjectId(idUsuario))
                 .orElseThrow(() -> new UsuarioInexistente("Usuario no encontrado en el sistema"));
 
@@ -126,26 +129,6 @@ public class UsuarioServicioImpl implements UsuarioServicio {
         }
         usuario.setEstado(EstadoUsuario.ACTIVO); // código válido y vigente
         usuarioRepo.save(usuario);
-    }
-
-    /**
-     * Metodo que envia un codigo a un correo indicado por parametro
-     * @param email al que se le enviara el codigo
-     */
-    private String enviarCodigo(@NotBlank @Length(max = 50) @Email String email) {
-
-        //generacion de codigo (largo 6 caracteres)
-        String codigo = generarCodigo();
-
-        //enviar el codigo al correo del parametro
-        SimpleMailMessage mensaje = new SimpleMailMessage();
-        mensaje.setFrom("diazorli64@gmail.com"); // debe coincidir con el username en application.properties
-        mensaje.setTo(email);
-        mensaje.setSubject("Código de verificación");
-        mensaje.setText("CODIGO DE ACTIVACION: "+codigo);
-
-        mailSender.send(mensaje);
-        return codigo;
     }
 
 
@@ -257,6 +240,88 @@ public class UsuarioServicioImpl implements UsuarioServicio {
         return usuarios.stream()
                 .map(usuarioMapper::toDTO)
                 .toList();
+    }
+
+
+    /**
+     * Servicio para recuperar una contrasenia de un USUARIO ACTIVO
+     * @param recuperarPasswordDTO contiene el email del usuario que se le actualizara la contrasenia
+     * @throws Exception
+     */
+    @Override
+    public void recuperarContrasenia(RecuperarContraseniaDTO recuperarPasswordDTO) throws Exception {
+        //Verificar que el email pertenezca a un usuario registrado
+
+        if (!existeEmail(recuperarPasswordDTO.email())){
+            throw new CorreoInexistenteException("ERROR. LA CONTRASENIA NO PUDO SER RECUPERADA, CORREO INEXISTENTE");
+        }
+
+        // Buscar usuario
+        Usuario usuario = usuarioRepo.findByEmail(recuperarPasswordDTO.email())
+                .orElseThrow(() -> new UsuarioInexistente("ERROR. Usuario no encontrado"));
+
+        //Verificar estadoUsuario sea Activo
+        if (!usuario.getEstado().equals(EstadoUsuario.ACTIVO)) {
+            throw new EstadoCuentaInvalidoException("ERROR. Usuario con un estado invalido");
+        }
+
+        //Validar que el codigo sea solicitado una vez cada 2 minutos
+        if (usuario.getFechaCodigoValidacion() != null &&
+                Duration.between(usuario.getFechaCodigoValidacion(), LocalDateTime.now()).toMinutes() < 2) {
+            throw new Exception("Debes esperar al menos 2 minutos para solicitar un nuevo código.");
+        }
+
+        //Enviar codigo
+        String codigo = generarCodigo();
+        //Se asigna el codigo de validacion y se envia al email del usuario
+        usuario.setCodigoValidacion(codigo);
+        usuario.setFechaCodigoValidacion(LocalDateTime.now()); //FECHA CODIGO DE VALIDACION. SERA USADO PARA VALIDAR 15 MIN DE VALIDEZ
+
+        usuarioRepo.save(usuario);
+
+        emailServicio.enviarCorreo(new EnviarCorreoDTO(recuperarPasswordDTO.email(),"RECUPERACION",
+                "CODIGO DE RECUPERACION DE CONTRASENIA "+codigo));
+
+    }
+
+    /**
+     * Servicio que valida que el codigo ingresado por el usuario sea valido y actualiza su
+     * contrasenia si el codigo es correcto
+     * @param cambiarPasswordDTO contiene el codigo a validar y la nueva contrasenia
+     * @throws Exception
+     */
+    @Override
+    public void cambiarContrasenia(CambiarPasswordDTO cambiarPasswordDTO) throws Exception {
+
+        Usuario usuario = usuarioRepo.findByEmail(cambiarPasswordDTO.email())
+                .orElseThrow(() -> new UsuarioInexistente("ERROR. Usuario no encontrado"));
+
+        if (!usuario.getEstado().equals(EstadoUsuario.ACTIVO)){
+            throw new EstadoCuentaInvalidoException("ERROR. LA CUENTA NO TIENE UN ESTADO VALIDO");
+        }
+
+        // Validar que el código coincida
+        if (!usuario.getCodigoValidacion().equals(cambiarPasswordDTO.codigo())) {
+            throw new CodigoVerificacionNoCoincideException("ERROR. El código ingresado no es correcto");
+        }
+
+        // Validar que no hayan pasado más de 15 minutos desde que se generó el código
+        LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime fechaGeneracion = usuario.getFechaCodigoValidacion();
+
+        Duration duracion = Duration.between(fechaGeneracion, ahora);
+        if (duracion.toMinutes() > 15) {
+            throw new CodigoExpiradoException("ERROR. EL CODIGO YA HA EXPIRADO"); // código expirado
+        }
+
+        //almacenar nueva contrasenia
+        usuario.setPassword(passwordEncoder.encode(cambiarPasswordDTO.nuevaPassword()));
+
+        //Garantiza que el codigo no sea reutilizado
+        usuario.setCodigoValidacion(null);
+        usuario.setFechaCodigoValidacion(null);
+        usuarioRepo.save(usuario);
+
     }
 
 

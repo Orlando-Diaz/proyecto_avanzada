@@ -1,9 +1,13 @@
 package co.edu.uniquindio.proyecto.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+
 public record EnviarCorreoDTO(
-        String asunto,
-        String cuerpo,
-        String destinatario
+        @NotBlank @Email String destinatario,
+        @NotBlank String asunto,
+        @NotBlank String cuerpo
+
 ) {
 
 
