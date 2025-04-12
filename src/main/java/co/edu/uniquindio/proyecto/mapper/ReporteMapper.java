@@ -43,6 +43,7 @@ public interface ReporteMapper {
     @Mapping(target = "ubicacion", source = "ubicacion")
     @Mapping(target = "fotos", source = "fotos")
     @Mapping(target = "ciudad", source = "ciudad")
+    @Mapping(target = "categoria", source = "idCategoria", qualifiedByName = "stringToObjectId")
     Reporte toDocumentFromAnonimo(CrearReporteAnonimoDTO dto);
 
     // Mapeo para actualización

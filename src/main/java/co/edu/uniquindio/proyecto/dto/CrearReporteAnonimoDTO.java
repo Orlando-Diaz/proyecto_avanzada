@@ -8,7 +8,7 @@ import java.util.List;
 public record CrearReporteAnonimoDTO(
         @NotBlank String titulo,
         @NotBlank String descripcion,
-        @NotBlank String categoria,
+        @NotBlank String idCategoria,
         boolean esAnonimo,
         UbicacionDTO ubicacion,
         List<String> fotos,
