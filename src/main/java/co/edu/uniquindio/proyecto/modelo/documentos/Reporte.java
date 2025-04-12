@@ -32,4 +32,6 @@ public class Reporte {
     private Ciudad ciudad;
     private List<Comentario> comentarios = new ArrayList<>();
     private ObjectId categoria;
+    private boolean esAnonimo;
+
 }

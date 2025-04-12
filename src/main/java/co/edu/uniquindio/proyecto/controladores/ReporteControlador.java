@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -139,5 +140,48 @@ public class ReporteControlador {
             return ResponseEntity.internalServerError().build();
         }
     }
+
+
+    // CONTROLADOR DE CREAR UN REPORTE ANONIMO
+    @Operation(summary = "Crear reporte anónimo")
+    @PostMapping("/anonimos")
+    public ResponseEntity<MensajeDTO<String>> crearReporteAnonimo(
+            @Valid @RequestBody CrearReporteAnonimoDTO dto) {
+        try {
+            reporteServicio.crearReporteAnonimo(dto);
+            return ResponseEntity.ok()
+                    .body(new MensajeDTO<>(false, "Reporte anónimo creado"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new MensajeDTO<>(true, e.getMessage()));
+        }
+    }
+
+
+    /*
+    RECHAZAR UN REPORTE CON JUSTIFICAIÓN
+     */
+    @Operation(summary = "Rechazar un reporte",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Reporte rechazado"),
+                    @ApiResponse(responseCode = "400", description = "Justificación inválida"),
+                    @ApiResponse(responseCode = "404", description = "Reporte no encontrado")
+            })
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PutMapping("/{id}/rechazar")
+    public ResponseEntity<MensajeDTO<String>> rechazarReporte(
+            @PathVariable String id,
+            @Valid @RequestBody RechazarReporteDTO dto) {
+        try {
+            reporteServicio.rechazarReporte(id, dto);
+            return ResponseEntity.ok()
+                    .body(new MensajeDTO<>(false, "Reporte rechazado correctamente"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new MensajeDTO<>(true, e.getMessage()));
+        }
+    }
+
+
 
 }

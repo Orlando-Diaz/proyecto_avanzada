@@ -43,4 +43,12 @@ public interface ReporteServicio {
     EstadisticasGeneralesDTO obtenerEstadisticasGenerales();
 
     List<ReporteDTO> listarReportesPorEstado(EstadoReporte estado);
+
+    //PARA REPORTE ANONIMO
+    void crearReporteAnonimo(CrearReporteAnonimoDTO crearReporteAnonimoDTO) throws Exception;
+
+    //RECHAZAR UN REPORTE
+    void rechazarReporte(String idReporte, RechazarReporteDTO dto) throws Exception;
+
+
 }
