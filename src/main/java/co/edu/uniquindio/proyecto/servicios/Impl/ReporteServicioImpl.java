@@ -2,12 +2,10 @@ package co.edu.uniquindio.proyecto.servicios.Impl;
 
 import co.edu.uniquindio.proyecto.dto.*;
 import co.edu.uniquindio.proyecto.mapper.ReporteMapper;
-import co.edu.uniquindio.proyecto.modelo.documentos.Comentario;
-import co.edu.uniquindio.proyecto.modelo.documentos.HistorialReporte;
-import co.edu.uniquindio.proyecto.modelo.documentos.Reporte;
-import co.edu.uniquindio.proyecto.modelo.documentos.Usuario;
+import co.edu.uniquindio.proyecto.modelo.documentos.*;
 import co.edu.uniquindio.proyecto.modelo.enums.Ciudad;
 import co.edu.uniquindio.proyecto.modelo.enums.EstadoReporte;
+import co.edu.uniquindio.proyecto.repositorios.CategoriaRepo;
 import co.edu.uniquindio.proyecto.repositorios.ReporteRepo;
 import co.edu.uniquindio.proyecto.repositorios.UsuarioRepo;
 import co.edu.uniquindio.proyecto.seguridad.JWTUtils;
@@ -20,9 +18,15 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.*;
+import java.io.ByteArrayOutputStream;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,6 +39,7 @@ public class ReporteServicioImpl implements ReporteServicio {
     private final UsuarioRepo usuarioRepo;
     private final EmailServicio emailServicio;
     private final JWTUtils jwtUtils;
+    private final CategoriaRepo categoriaRepo;
 
     @Override
     public void crearReporte(CrearReporteDTO crearReporteDTO) throws Exception {
@@ -46,8 +51,15 @@ public class ReporteServicioImpl implements ReporteServicio {
         ObjectId usuarioId = new ObjectId(crearReporteDTO.idUsuario());
         Optional<Usuario> usuario = usuarioRepo.findById(usuarioId);
 
+        ObjectId categoriaId = new ObjectId(crearReporteDTO.idCategoria());
+        Optional<Categoria> categoria = categoriaRepo.findById(categoriaId);
+
         if(usuario.isEmpty()) {
             throw new Exception("El usuario no existe");
+        }
+
+        if (categoria.isEmpty()){
+            throw new Exception("La categoria no existe");
         }
 
         // 2. Validar campos requeridos
@@ -365,6 +377,339 @@ public class ReporteServicioImpl implements ReporteServicio {
         return "Estado del reporte actualizado a: " + nuevoEstado;
 
     }
+
+    @Override
+    public InformeCategoriaDTO generarInformePorCategoria(String categoria, LocalDate fechaInicio, LocalDate fechaFin) {
+        List<Reporte> reportes;
+
+        // Determinar qué método del repositorio usar según los parámetros
+        if (categoria != null && !categoria.isBlank()) {
+            if (fechaInicio != null && fechaFin != null) {
+                LocalDateTime inicio = fechaInicio.atStartOfDay();
+                LocalDateTime fin = fechaFin.atTime(23, 59, 59);
+                reportes = reporteRepo.findByCategoriaAndFechaBetween(categoria, inicio, fin);
+            } else {
+                reportes = reporteRepo.findByCategoria(categoria);
+            }
+        } else if (fechaInicio != null && fechaFin != null) {
+            LocalDateTime inicio = fechaInicio.atStartOfDay();
+            LocalDateTime fin = fechaFin.atTime(23, 59, 59);
+            reportes = reporteRepo.findByFechaBetween(inicio, fin);
+        } else {
+            // Sin filtros, traer todos (podría ser limitado o paginado para evitar problemas de memoria)
+            reportes = reporteRepo.findAll();
+        }
+
+        // Resto del procesamiento igual que antes
+        Map<String, Long> distribucionEstados = reportes.stream()
+                .collect(Collectors.groupingBy(
+                        r -> r.getEstadoActual().name(),
+                        Collectors.counting()
+                ));
+
+        List<ReporteResumidoDTO> reportesResumidos = reportes.stream()
+                .map(r -> new ReporteResumidoDTO(
+                        r.getId().toString(),
+                        r.getTitulo(),
+                        r.getFecha(),
+                        r.getEstadoActual(),
+                        r.getContadorImportante()
+                ))
+                .collect(Collectors.toList());
+
+        return new InformeCategoriaDTO(
+                categoria,
+                fechaInicio,
+                fechaFin,
+                reportes.size(),
+                reportesResumidos,
+                distribucionEstados
+        );
+    }
+
+    @Override
+    public InformeGeograficoDTO generarInformePorUbicacion(
+            Double latitud, Double longitud, Double radioKm,
+            LocalDate fechaInicio, LocalDate fechaFin) {
+
+        // Convertir radio a metros
+        double distanciaMetros = radioKm * 1000;
+        List<Reporte> reportes;
+
+        if (fechaInicio != null && fechaFin != null) {
+            LocalDateTime inicio = fechaInicio.atStartOfDay();
+            LocalDateTime fin = fechaFin.atTime(23, 59, 59);
+            reportes = reporteRepo.findByUbicacionNearAndFechaBetween(
+                    longitud, latitud, distanciaMetros, inicio, fin);
+        } else {
+            reportes = reporteRepo.findByUbicacionNear(longitud, latitud, distanciaMetros);
+        }
+
+        // Calcular la distribución por categoría - Necesitamos adaptarlo para ObjectId
+        Map<String, Long> reportesPorCategoria = reportes.stream()
+                .collect(Collectors.groupingBy(
+                        reporte -> reporte.getCategoria().toString(),
+                        Collectors.counting()
+                ));
+
+        // Convertir a DTOs con distancia calculada
+        List<ReporteUbicacionDTO> reportesDTO = new ArrayList<>();
+        for (Reporte reporte : reportes) {
+            // Calcular distancia usando la fórmula de Haversine
+            double distancia = calcularDistanciaHaversine(
+                    latitud, longitud,
+                    reporte.getUbicacion().getLatitud(),
+                    reporte.getUbicacion().getLongitud());
+
+            // También necesitamos adaptar la categoría como String
+            reportesDTO.add(new ReporteUbicacionDTO(
+                    reporte.getId().toString(),
+                    reporte.getTitulo(),
+                    reporte.getCategoria().toString(), // Convertir ObjectId a String
+                    new UbicacionDTO(reporte.getUbicacion().getLatitud(), reporte.getUbicacion().getLongitud()),
+                    distancia,
+                    reporte.getFecha(),
+                    reporte.getEstadoActual()
+            ));
+        }
+
+        // Ordenar por distancia (más cercanos primero)
+        reportesDTO.sort(Comparator.comparing(ReporteUbicacionDTO::distanciaKm));
+
+        // Crear y retornar el DTO del informe
+        return new InformeGeograficoDTO(
+                latitud,
+                longitud,
+                radioKm,
+                fechaInicio,
+                fechaFin,
+                reportes.size(),
+                reportesPorCategoria,
+                reportesDTO
+        );
+    }
+
+    // Método auxiliar para calcular la distancia entre dos puntos usando la fórmula de Haversine
+    private double calcularDistanciaHaversine(double lat1, double lon1, double lat2, double lon2) {
+        // Radio de la Tierra en kilómetros
+        final double R = 6371.0;
+
+        // Convertir coordenadas a radianes
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+
+        // Fórmula de Haversine
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        // Distancia en kilómetros
+        return R * c;
+    }
+
+    @Override
+    public List<ReporteDTO> listarReportesPorEstado(EstadoReporte estado) {
+        List<Reporte> reportes = reporteRepo.findByEstadoActual(estado);
+        return reportes.stream()
+                .map(reporteMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+
+    @Override
+    public EstadisticasGeneralesDTO obtenerEstadisticasGenerales() {
+        // Obtener conteo total de reportes
+        long totalReportes = reporteRepo.count();
+
+        // Obtener conteo por cada estado
+        long reportesPendientes = reporteRepo.countByEstadoActual(EstadoReporte.PENDIENTE);
+        long reportesResueltos = reporteRepo.countByEstadoActual(EstadoReporte.RESUELTO);
+        long reportesRechazados = reporteRepo.countByEstadoActual(EstadoReporte.RECHAZADO);
+
+        // Agrupar reportes por categoría
+        List<Reporte> todosLosReportes = reporteRepo.findAll();
+        Map<String, Long> reportesPorCategoria = todosLosReportes.stream()
+                .collect(Collectors.groupingBy(
+                        reporte -> reporte.getCategoria().toString(),
+                        Collectors.counting()
+                ));
+
+        // Agrupar reportes por ciudad
+        Map<String, Long> reportesPorCiudad = todosLosReportes.stream()
+                .filter(reporte -> reporte.getCiudad() != null)
+                .collect(Collectors.groupingBy(
+                        reporte -> reporte.getCiudad().name(),
+                        Collectors.counting()
+                ));
+
+        // Crear y retornar el objeto DTO
+        return new EstadisticasGeneralesDTO(
+                totalReportes,
+                reportesPendientes,
+                reportesResueltos,
+                reportesRechazados,
+                reportesPorCategoria,
+                reportesPorCiudad,
+                LocalDateTime.now()
+        );
+    }
+
+    @Override
+    public byte[] generarInformePorCategoriaPDF(String categoria, LocalDate fechaInicio, LocalDate fechaFin) throws Exception {
+        // Obtener primero el informe de datos
+        InformeCategoriaDTO informe = generarInformePorCategoria(categoria, fechaInicio, fechaFin);
+
+        // Crear un ByteArrayOutputStream para almacenar el PDF
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        // Crear el documento PDF
+        Document document = new Document(PageSize.A4);
+        PdfWriter.getInstance(document, baos);
+
+        document.open();
+
+        // Añadir título
+        Font titleFont = new Font(Font.FontFamily.HELVETICA, 18, Font.BOLD);
+        Paragraph title = new Paragraph("Informe de Reportes por Categoría", titleFont);
+        title.setAlignment(Element.ALIGN_CENTER);
+        document.add(title);
+        document.add(new Paragraph(" ")); // Espacio
+
+        // Añadir información del informe
+        if (categoria != null && !categoria.isBlank()) {
+            document.add(new Paragraph("Categoría: " + categoria));
+        } else {
+            document.add(new Paragraph("Todas las categorías"));
+        }
+
+        if (fechaInicio != null) {
+            document.add(new Paragraph("Fecha Inicio: " + fechaInicio));
+        }
+        if (fechaFin != null) {
+            document.add(new Paragraph("Fecha Fin: " + fechaFin));
+        }
+        document.add(new Paragraph("Total de Reportes: " + informe.totalReportes()));
+        document.add(new Paragraph(" ")); // Espacio
+
+        // Añadir distribución por estados
+        document.add(new Paragraph("Distribución por Estado:", new Font(Font.FontFamily.HELVETICA, 14, Font.BOLD)));
+        for (Map.Entry<String, Long> entry : informe.distribucionEstados().entrySet()) {
+            document.add(new Paragraph(entry.getKey() + ": " + entry.getValue() + " reportes"));
+        }
+        document.add(new Paragraph(" ")); // Espacio
+
+        // Crear tabla para los reportes
+        PdfPTable table = new PdfPTable(4); // 4 columnas
+        table.setWidthPercentage(100);
+
+        // Encabezados de la tabla
+        addTableHeader(table, new String[]{"ID", "Título", "Fecha", "Estado"});
+
+        // Contenido de la tabla
+        for (ReporteResumidoDTO reporte : informe.reportes()) {
+            table.addCell(reporte.id());
+            table.addCell(reporte.titulo());
+
+            // Formatear la fecha
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+            String fechaFormateada = reporte.fecha().format(formatter);
+            table.addCell(fechaFormateada);
+
+            table.addCell(reporte.estadoActual().toString());
+        }
+
+        document.add(table);
+
+        // Agregar gráfico de distribución por estados (opcional, requiere library adicional)
+        // Esta parte necesitaría JFreeChart si quieres implementar gráficos
+
+        // Cerrar el documento
+        document.close();
+
+        return baos.toByteArray();
+    }
+
+
+
+    @Override
+    public byte[] generarInformePorUbicacionPDF(Double latitud, Double longitud, Double radioKm,
+                                                LocalDate fechaInicio, LocalDate fechaFin) throws Exception {
+        // Obtener primero el informe de datos
+        InformeGeograficoDTO informe = generarInformePorUbicacion(latitud, longitud, radioKm, fechaInicio, fechaFin);
+
+        // Crear un ByteArrayOutputStream para almacenar el PDF
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        // Crear el documento PDF
+        Document document = new Document(PageSize.A4);
+        PdfWriter.getInstance(document, baos);
+
+        document.open();
+
+        // Añadir título
+        Font titleFont = new Font(Font.FontFamily.HELVETICA, 18, Font.BOLD);
+        Paragraph title = new Paragraph("Informe de Reportes por Ubicación", titleFont);
+        title.setAlignment(Element.ALIGN_CENTER);
+        document.add(title);
+        document.add(new Paragraph(" ")); // Espacio
+
+        // Añadir información del informe
+        document.add(new Paragraph("Ubicación: Latitud: " + latitud + ", Longitud: " + longitud));
+        document.add(new Paragraph("Radio: " + radioKm + " km"));
+        if (fechaInicio != null) {
+            document.add(new Paragraph("Fecha Inicio: " + fechaInicio));
+        }
+        if (fechaFin != null) {
+            document.add(new Paragraph("Fecha Fin: " + fechaFin));
+        }
+        document.add(new Paragraph("Total de Reportes: " + informe.totalReportes()));
+        document.add(new Paragraph(" ")); // Espacio
+
+        // Añadir estadísticas por categoría
+        document.add(new Paragraph("Distribución por Categoría:", new Font(Font.FontFamily.HELVETICA, 14, Font.BOLD)));
+        for (Map.Entry<String, Long> entry : informe.reportesPorCategoria().entrySet()) {
+            document.add(new Paragraph(entry.getKey() + ": " + entry.getValue() + " reportes"));
+        }
+        document.add(new Paragraph(" ")); // Espacio
+
+        // Crear tabla para los reportes
+        PdfPTable table = new PdfPTable(5); // 5 columnas
+        table.setWidthPercentage(100);
+
+        // Encabezados de la tabla
+        addTableHeader(table, new String[]{"ID", "Título", "Categoría", "Distancia (km)", "Estado"});
+
+        // Contenido de la tabla
+        for (ReporteUbicacionDTO reporte : informe.reportes()) {
+            table.addCell(reporte.id());
+            table.addCell(reporte.titulo());
+            table.addCell(reporte.categoria());
+            table.addCell(String.format("%.2f", reporte.distanciaKm()));
+            table.addCell(reporte.estadoActual().toString());
+        }
+
+        document.add(table);
+
+        // Cerrar el documento
+        document.close();
+
+        return baos.toByteArray();
+    }
+
+    // Método auxiliar para añadir encabezados a la tabla
+    private void addTableHeader(PdfPTable table, String[] headers) {
+        for (String header : headers) {
+            PdfPCell cell = new PdfPCell();
+            cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+            cell.setPadding(5);
+            cell.setPhrase(new Phrase(header, new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD)));
+            table.addCell(cell);
+        }
+    }
+
+
 
 
 }

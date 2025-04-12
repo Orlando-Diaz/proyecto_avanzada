@@ -49,6 +49,8 @@ dependencies {
     implementation("org.simplejavamail:batch-module:8.12.5")
     implementation ("org.springframework.boot:spring-boot-starter-mail")
     implementation("com.cloudinary:cloudinary-http45:1.39.0")
+    implementation("com.itextpdf:itextpdf:5.5.13.3")
+
 
     //IMPLEMENTACIONES GUIA 11
     implementation("org.springframework.boot:spring-boot-starter-security")

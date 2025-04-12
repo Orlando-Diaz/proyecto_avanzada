@@ -1,10 +1,10 @@
 package co.edu.uniquindio.proyecto.servicios.interfaces;
 
 import co.edu.uniquindio.proyecto.dto.*;
-import org.springframework.stereotype.Service;
+import co.edu.uniquindio.proyecto.modelo.enums.EstadoReporte;
 
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 
 
 public interface ReporteServicio {
@@ -28,4 +28,19 @@ public interface ReporteServicio {
 
 //  Agregado 1:15 am 04-08-2025
     String editarEstadoReporte(String idReporte, String idUsuario,String motivo, EstadoReporteDTO estadoReporteDTO) throws Exception;
+
+    InformeCategoriaDTO generarInformePorCategoria(String categoria, LocalDate fechaInicio, LocalDate fechaFin);
+
+    InformeGeograficoDTO generarInformePorUbicacion(
+            Double latitud, Double longitud, Double radioKm,
+            LocalDate fechaInicio, LocalDate fechaFin);
+
+    byte[] generarInformePorCategoriaPDF(String categoria, LocalDate fechaInicio, LocalDate fechaFin) throws Exception;
+
+    byte[] generarInformePorUbicacionPDF(Double latitud, Double longitud, Double radioKm,
+                                         LocalDate fechaInicio, LocalDate fechaFin) throws Exception;
+
+    EstadisticasGeneralesDTO obtenerEstadisticasGenerales();
+
+    List<ReporteDTO> listarReportesPorEstado(EstadoReporte estado);
 }

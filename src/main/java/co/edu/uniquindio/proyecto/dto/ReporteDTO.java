@@ -15,5 +15,5 @@ public record ReporteDTO(
         List<String> fotos,
         String estadoActual,
         Ciudad ciudad,
-        List<ComentarioDTO> comentarios
+        List<String> comentarios
 ) {}

@@ -27,7 +27,7 @@ public interface ReporteMapper {
     @Mapping(target = "idUsuario", source = "idUsuario", qualifiedByName = "stringToObjectId")
     @Mapping(target = "ubicacion", source = "ubicacion")
     @Mapping(target = "fotos", source = "fotos")
-    @Mapping(target = "categoria", source = "categoria")
+    @Mapping(target = "categoria", source = "idCategoria", qualifiedByName = "stringToObjectId")
     Reporte toDocument(CrearReporteDTO dto);
 
     // Mapeo para actualización
