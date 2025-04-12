@@ -69,15 +69,6 @@ public class NotificacionServicioImpl implements NotificacionServicio {
         messagingTemplate.convertAndSend("/topic/notifications", notificacion);
     }
 
-    @Override
-    public void enviarCorreoElectronico(EnviarCorreoDTO emailDTO) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(emailDTO.destinatario());
-        message.setSubject(emailDTO.asunto());
-        message.setText(emailDTO.cuerpo());
-
-        emailSender.send(message);
-    }
 
     @Override
     public List<NotificacionDTO> listarNotificacionesPorUsuario(String idUsuario) {

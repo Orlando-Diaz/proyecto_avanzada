@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 public class EnviarCorreoImpl implements EmailServicio {
 
     @Autowired
-    private JavaMailSender mailSender;
+    private final JavaMailSender emailSender;
 
     /**
      * Implementacion del servicio que envia un email usando JavaMailSender
@@ -27,16 +27,14 @@ public class EnviarCorreoImpl implements EmailServicio {
      * @throws Exception
      */
     @Override
-    public void enviarCorreo(EnviarCorreoDTO emailDTO) throws Exception {
+    public void enviarCorreo(EnviarCorreoDTO emailDTO) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(emailDTO.destinatario());
+        message.setSubject(emailDTO.asunto());
+        message.setText(emailDTO.cuerpo());
 
-        //enviar el codigo al email del parametro
-        SimpleMailMessage mensaje = new SimpleMailMessage();
-        mensaje.setFrom("diazorli64@gmail.com"); // debe coincidir con el username en application.properties
-        mensaje.setTo(emailDTO.destinatario());
-        mensaje.setSubject(emailDTO.asunto());
-        mensaje.setText(emailDTO.cuerpo());
-
-        mailSender.send(mensaje);
-
+        emailSender.send(message);
     }
+
+
 }

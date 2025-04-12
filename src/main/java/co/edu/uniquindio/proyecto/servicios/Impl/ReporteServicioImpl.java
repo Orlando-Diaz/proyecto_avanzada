@@ -256,15 +256,40 @@ public class ReporteServicioImpl implements ReporteServicio {
      */
 
     public String agregarComentario(String idReporte, ComentarioDTO comentarioDTO) throws Exception {
+        // Obtener el reporte
         Reporte reporte = obtenerReporte(idReporte);
 
+        // Crear y configurar el comentario
         Comentario comentario = new Comentario();
         comentario.setId(new ObjectId());
         comentario.setIdUsuario(new ObjectId(comentarioDTO.idUsuario()));
         comentario.setContenido(comentarioDTO.contenido());
         comentario.setFecha(LocalDateTime.now());
 
+        // Añadir el comentario al reporte
         reporte.getComentarios().add(comentario);
+
+        // Obtener el usuario que creó el reporte (dueño del reporte)
+        Optional<Usuario> optionalDuenoReporte = usuarioRepo.findById(reporte.getIdUsuario());
+        if (optionalDuenoReporte.isEmpty()) {
+            throw new Exception("No se encontró el dueño del reporte");
+        }
+
+        // Obtener el usuario que hizo el comentario
+        Optional<Usuario> optionalComentarista = usuarioRepo.findById(new ObjectId(comentarioDTO.idUsuario()));
+        String nombreComentarista = optionalComentarista.isPresent() ?
+                optionalComentarista.get().getNombre() :
+                "Un usuario";
+
+        // Enviar correo al dueño del reporte
+        Usuario duenoReporte = optionalDuenoReporte.get();
+        emailServicio.enviarCorreo(new EnviarCorreoDTO(
+                duenoReporte.getEmail(),
+                "Nuevo comentario en tu reporte: " + reporte.getTitulo(),
+                nombreComentarista + " ha comentado en tu reporte:\n\n" + comentarioDTO.contenido()
+        ));
+
+        // Guardar el reporte actualizado
         reporteRepo.save(reporte);
 
         return comentario.getId().toString();
