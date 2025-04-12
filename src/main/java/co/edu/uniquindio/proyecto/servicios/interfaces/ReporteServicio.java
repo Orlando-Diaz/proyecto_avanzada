@@ -28,4 +28,10 @@ public interface ReporteServicio {
 
 //  Agregado 1:15 am 04-08-2025
     String editarEstadoReporte(String idReporte, String idUsuario,String motivo, EstadoReporteDTO estadoReporteDTO) throws Exception;
+
+    //PARA REPORTE ANONIMO
+    void crearReporteAnonimo(CrearReporteAnonimoDTO crearReporteAnonimoDTO) throws Exception;
+
+
+
 }

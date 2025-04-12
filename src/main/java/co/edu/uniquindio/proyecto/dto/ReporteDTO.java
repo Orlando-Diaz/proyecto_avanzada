@@ -1,6 +1,8 @@
 package co.edu.uniquindio.proyecto.dto;
 
 import co.edu.uniquindio.proyecto.modelo.enums.Ciudad;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -15,5 +17,9 @@ public record ReporteDTO(
         List<String> fotos,
         String estadoActual,
         Ciudad ciudad,
-        List<ComentarioDTO> comentarios
+        List<ComentarioDTO> comentarios,
+
+        boolean esAnonimo,
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        String nombreUsuario
 ) {}

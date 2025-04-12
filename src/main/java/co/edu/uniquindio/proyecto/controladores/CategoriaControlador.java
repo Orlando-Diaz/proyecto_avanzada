@@ -22,8 +22,8 @@ public class CategoriaControlador {
 
     @PostMapping("/crear/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<MensajeDTO<String>> crearCategoria(@Valid @RequestBody CrearCategoriaDTO crearCategoriaDTO) throws Exception {
-        categoriaServicio.crear(crearCategoriaDTO);
+    public ResponseEntity<MensajeDTO<String>> crearCategoria(@Valid @RequestBody CrearCategoriaDTO dto) throws Exception {
+        categoriaServicio.crear(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 new MensajeDTO<>(false, "Categoría creada exitosamente")
         );
@@ -42,11 +42,9 @@ public class CategoriaControlador {
 
     @DeleteMapping("/eliminar/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<MensajeDTO<String>> eliminarCategoria(@PathVariable String id) throws Exception {
+    public ResponseEntity<Void> eliminarCategoria(@PathVariable String id) throws Exception {
         categoriaServicio.eliminar(id);
-        return ResponseEntity.ok().body(
-                new MensajeDTO<>(false, "Categoría eliminada exitosamente")
-        );
+        return ResponseEntity.noContent().build(); // 204 NO CONTENT
     }
 
     @GetMapping("/obtener/{id}")
