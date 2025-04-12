@@ -6,6 +6,7 @@ import co.edu.uniquindio.proyecto.modelo.documentos.Categoria;
 import co.edu.uniquindio.proyecto.repositorios.CategoriaRepo;
 import co.edu.uniquindio.proyecto.servicios.interfaces.CategoriaServicio;
 import lombok.RequiredArgsConstructor;
+import org.bson.types.ObjectId;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -33,15 +34,15 @@ public class CategoriaServicioImpl implements CategoriaServicio {
 
     @Override
     public void eliminar(String id) throws Exception {
-        if(!categoriaRepo.existsById(id)) {
+        if(!categoriaRepo.existsById(new ObjectId(id))) {
             throw new Exception("No se encontró la categoría con ID: " + id);
         }
-        categoriaRepo.deleteById(id);
+        categoriaRepo.deleteById(new ObjectId(id));
     }
 
     @Override
     public void editar(String id, CategoriaDTO categoriaDTO) throws Exception {
-        Categoria categoria = categoriaRepo.findById(id)
+        Categoria categoria = categoriaRepo.findById(new ObjectId(id))
                 .orElseThrow(() -> new Exception("Categoría no encontrada con ID: " + id));
 
         if(!categoria.getNombre().equals(categoriaDTO.nombre()) &&
@@ -55,7 +56,7 @@ public class CategoriaServicioImpl implements CategoriaServicio {
 
     @Override
     public CategoriaDTO obtener(String id) throws Exception {
-        Categoria categoria = categoriaRepo.findById(id)
+        Categoria categoria = categoriaRepo.findById(new ObjectId(id))
                 .orElseThrow(() -> new Exception("Categoría no encontrada con ID: " + id));
 
         return convertirADTO(categoria);
@@ -79,7 +80,7 @@ public class CategoriaServicioImpl implements CategoriaServicio {
 
     private CategoriaDTO convertirADTO(Categoria categoria) {
         return new CategoriaDTO(
-                categoria.getId(),
+                categoria.getId().toString(),
                 categoria.getNombre()
         );
     }

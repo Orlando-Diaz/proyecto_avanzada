@@ -6,7 +6,11 @@
       <GradleProjectSettings>
         <option name="delegatedBuild" value="false" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
+<<<<<<< HEAD
         <option name="gradleJvm" value="openjdk-23 (3)" />
+=======
+        <option name="gradleJvm" value="corretto-21" />
+>>>>>>> 6f6475c78c0d21acb60aaa0d369aee81ebcf793e
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />

@@ -366,5 +366,25 @@ public class ReporteServicioImpl implements ReporteServicio {
 
     }
 
+    /*
+    IMPLEMENTACIÓN PARA LA CREACIÓN DE UN REPORTE ANONIMO
+     */
+
+    @Override
+    public void crearReporteAnonimo(CrearReporteAnonimoDTO dto) throws Exception {
+        // Validaciones básicas
+        if(dto.titulo().isBlank()) {
+            throw new Exception("El título es obligatorio");
+        }
+
+        if(dto.descripcion().isBlank()) {
+            throw new Exception("La descripción es obligatoria");
+        }
+
+        // Convertir DTO a documento
+        Reporte reporte = reporteMapper.toDocumentFromAnonimo(dto);
+        reporteRepo.save(reporte);
+    }
+
 
 }

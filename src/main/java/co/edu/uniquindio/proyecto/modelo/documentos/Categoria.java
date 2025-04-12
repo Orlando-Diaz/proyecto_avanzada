@@ -13,15 +13,15 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @NoArgsConstructor
 public class Categoria {
     @Id
-    private String id;
+    private ObjectId id;
 
     @NotBlank
     @Size(min = 3, max = 50)
     private String nombre;
 
     @Builder
-    public Categoria(String nombre) {
+    public Categoria(String nombre, ObjectId id) {
         this.nombre = nombre;
-        this.id = new ObjectId().toString(); // Genera el ID como String
+        this.id = id; // Genera el ID como String
     }
 }

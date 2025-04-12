@@ -1,4 +1,4 @@
-package co.edu.uniquindio.proyecto.Config;
+package co.edu.uniquindio.proyecto.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
