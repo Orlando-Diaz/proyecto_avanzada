@@ -140,4 +140,22 @@ public class ReporteControlador {
         }
     }
 
+
+    // CONTROLADOR DE CREAR UN REPORTE ANONIMO
+    @Operation(summary = "Crear reporte anónimo")
+    @PostMapping("/anonimos")
+    public ResponseEntity<MensajeDTO<String>> crearReporteAnonimo(
+            @Valid @RequestBody CrearReporteAnonimoDTO dto) {
+        try {
+            reporteServicio.crearReporteAnonimo(dto);
+            return ResponseEntity.ok()
+                    .body(new MensajeDTO<>(false, "Reporte anónimo creado"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(new MensajeDTO<>(true, e.getMessage()));
+        }
+    }
+
+
+
 }
