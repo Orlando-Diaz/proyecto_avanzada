@@ -1,4 +1,4 @@
-package co.edu.uniquindio.proyecto.Config;
+package co.edu.uniquindio.proyecto.config;
 
 import co.edu.uniquindio.proyecto.seguridad.AutenticacionEntryPoint;
 import co.edu.uniquindio.proyecto.seguridad.JWTFilter;

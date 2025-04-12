@@ -1,9 +1,7 @@
 package co.edu.uniquindio.proyecto.servicios.interfaces;
 
-import co.edu.uniquindio.proyecto.dto.EmailDTO;
+import co.edu.uniquindio.proyecto.dto.EnviarCorreoDTO;
 import co.edu.uniquindio.proyecto.dto.NotificacionDTO;
-import co.edu.uniquindio.proyecto.modelo.documentos.Notificacion;
-import org.bson.types.ObjectId;
 
 import java.util.List;
 
@@ -13,7 +11,7 @@ public interface NotificacionServicio {
 
     void enviarNotificacionPorWebSocket(NotificacionDTO notificacion);
 
-    void enviarCorreoElectronico(EmailDTO emailDTO);
+    void enviarCorreoElectronico(EnviarCorreoDTO emailDTO);
 
     List<NotificacionDTO> listarNotificacionesPorUsuario(String idUsuario);
 

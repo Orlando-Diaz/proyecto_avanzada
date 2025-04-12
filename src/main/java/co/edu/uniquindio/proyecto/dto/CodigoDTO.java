@@ -1,7 +1,9 @@
 package co.edu.uniquindio.proyecto.dto;
 
+import jakarta.validation.constraints.NotBlank;
+
 /**
- * Codigo utilizado para activar cuenta y para recuperar contrasenia
+ * Codigo utilizado para activar cuenta
  */
-public record CodigoDTO(String codigo) {
+public record CodigoDTO(@NotBlank String codigo) {
 }
