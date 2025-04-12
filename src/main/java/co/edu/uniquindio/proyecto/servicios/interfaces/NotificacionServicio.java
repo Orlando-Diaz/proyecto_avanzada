@@ -11,8 +11,6 @@ public interface NotificacionServicio {
 
     void enviarNotificacionPorWebSocket(NotificacionDTO notificacion);
 
-    void enviarCorreoElectronico(EnviarCorreoDTO emailDTO);
-
     List<NotificacionDTO> listarNotificacionesPorUsuario(String idUsuario);
 
     void marcarNotificacionComoLeida(String idNotificacion);
