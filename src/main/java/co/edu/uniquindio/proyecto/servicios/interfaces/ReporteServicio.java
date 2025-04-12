@@ -32,6 +32,8 @@ public interface ReporteServicio {
     //PARA REPORTE ANONIMO
     void crearReporteAnonimo(CrearReporteAnonimoDTO crearReporteAnonimoDTO) throws Exception;
 
+    //RECHAZAR UN REPORTE
+    void rechazarReporte(String idReporte, RechazarReporteDTO dto) throws Exception;
 
 
 }

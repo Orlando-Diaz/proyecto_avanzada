@@ -18,6 +18,9 @@ import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -383,6 +386,58 @@ public class ReporteServicioImpl implements ReporteServicio {
 
         // Convertir DTO a documento
         Reporte reporte = reporteMapper.toDocumentFromAnonimo(dto);
+        reporteRepo.save(reporte);
+    }
+
+
+    //RECHAZAR UN REPORTE
+    @Override
+    public void rechazarReporte(String idReporte, RechazarReporteDTO dto) throws Exception {
+
+        // Obtener el usuario actual
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        // Validar que sea ADMIN
+        if(!authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR"))) {
+            throw new AccessDeniedException("No tienes permisos para rechazar reportes");
+        }
+
+        // Validar justificación
+        if(dto.justificacion() == null || dto.justificacion().isBlank()) {
+            throw new Exception("La justificación es obligatoria");
+        }
+
+        // Obtener el reporte
+        Reporte reporte = reporteRepo.findById(new ObjectId(idReporte))
+                .orElseThrow(() -> new Exception("Reporte no encontrado"));
+
+        // Validar que esté en estado PENDIENTE
+        if(reporte.getEstadoActual() != EstadoReporte.PENDIENTE) {
+            throw new Exception("Solo se pueden rechazar reportes en estado PENDIENTE");
+        }
+
+        // Obtener ID del usuario que rechaza
+        String idUsuario = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        // Crear entrada en el historial
+        Map<String, String> cambios = new HashMap<>();
+        cambios.put("estado", "De PENDIENTE a RECHAZADO");
+        cambios.put("justificacion", dto.justificacion());
+
+        HistorialReporte historial = new HistorialReporte(
+                "Reporte rechazado: " + dto.justificacion(),
+                EstadoReporte.RECHAZADO,
+                LocalDateTime.now(),
+                cambios
+        );
+
+        // Actualizar el reporte
+        reporte.setEstadoActual(EstadoReporte.RECHAZADO);
+        if(reporte.getHistorial() == null) {
+            reporte.setHistorial(new ArrayList<>());
+        }
+        reporte.getHistorial().add(historial);
+
         reporteRepo.save(reporte);
     }
 

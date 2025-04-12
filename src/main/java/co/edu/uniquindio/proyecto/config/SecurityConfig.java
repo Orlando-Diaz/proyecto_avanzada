@@ -55,20 +55,21 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
 
                         // Endpoints de administración
-                        .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMINISTRADOR")
 
                         // Endpoints de clientes
-                        .requestMatchers("/api/clientes/**").hasAnyAuthority("ROLE_CLIENTE", "ROLE_ADMIN")
+                        .requestMatchers("/api/clientes/**").hasAnyAuthority("ROLE_CLIENTE", "ROLE_ADMINISTRADOR")
 
                         // Endpoints de usuarios
-                        .requestMatchers(HttpMethod.PUT, "/api/usuarios/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_CLIENTE")
+                        .requestMatchers(HttpMethod.PUT, "/api/usuarios/**").hasAnyAuthority("ROLE_ADMINISTRADOR", "ROLE_CLIENTE")
                         .requestMatchers(HttpMethod.GET, "/api/usuarios/**").authenticated()
 
                         // Permisos para reportes
-                        .requestMatchers(HttpMethod.POST, "/api/reportes").hasAnyAuthority("ROLE_CLIENTE", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/reportes/**").hasAnyAuthority("ROLE_CLIENTE", "ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/reportes/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/reportes").hasAnyAuthority("ROLE_CLIENTE", "ROLE_ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/reportes/**").hasAnyAuthority("ROLE_CLIENTE", "ROLE_ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/reportes/**").hasAuthority("ROLE_ADMINISTRADOR")
                         .requestMatchers(HttpMethod.GET, "/api/reportes/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/reportes/**/rechazar").hasAnyAuthority("ROLE_ADMINISTRADOR")
 
                         // Todos los demás endpoints requieren autenticación
                         .anyRequest().authenticated()
