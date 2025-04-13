@@ -61,9 +61,17 @@ dependencies {
     //Implementacion de Firebase
     implementation("com.google.firebase:firebase-admin:9.4.3")
 
+    //Pruebas
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
+    testImplementation("org.mockito:mockito-core:5.2.0")
+    testImplementation("org.mockito:mockito-junit-jupiter:5.2.0")
 
 }
 
 tasks.withType<Test> {
+    useJUnitPlatform()
+}
+
+tasks.test {
     useJUnitPlatform()
 }
