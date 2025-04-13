@@ -26,8 +26,9 @@ public interface ReporteServicio {
     int marcarComoImportante(String idReporte) throws Exception;
     List<ReporteDTO> listarReportesOrdenadosPorImportancia();
 
-//  Agregado 1:15 am 04-08-2025
-    String editarEstadoReporte(String idReporte, String idUsuario,String motivo, EstadoReporteDTO estadoReporteDTO) throws Exception;
+    void gestionarEstadoReporteAdministrador(GestionarEstadoReporteDTO estadoReporteDTO) throws Exception;
+
+    void gestionarEstadoReporteCliente(GestionarEstadoReporteDTO estadoReporteDTO) throws Exception;
 
     InformeCategoriaDTO generarInformePorCategoria(String categoria, LocalDate fechaInicio, LocalDate fechaFin);
 

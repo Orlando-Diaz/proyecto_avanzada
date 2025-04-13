@@ -1,16 +1,19 @@
 package co.edu.uniquindio.proyecto.controladores;
 
 import co.edu.uniquindio.proyecto.dto.*;
+import co.edu.uniquindio.proyecto.excepciones.EstadoReporteInvalidoException;
 import co.edu.uniquindio.proyecto.modelo.documentos.HistorialReporte;
 import co.edu.uniquindio.proyecto.modelo.documentos.Reporte;
 import co.edu.uniquindio.proyecto.repositorios.ReporteRepo;
 import co.edu.uniquindio.proyecto.servicios.interfaces.ReporteServicio;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -182,6 +185,56 @@ public class ReporteControlador {
         }
     }
 
+
+    @Operation(
+            summary = "Gestionar el estado de un reporte",
+            description = "Permite a un administrador cambiar el estado de un reporte si no ha sido eliminado y si el nuevo estado es diferente al actual.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Estado del reporte actualizado correctamente"),
+                    @ApiResponse(responseCode = "400", description = "Estado inválido o el reporte ya tiene ese estado"),
+                    @ApiResponse(responseCode = "404", description = "Reporte no encontrado"),
+            }
+    )
+    @PutMapping("/gestionar-estado-reporte-admin")
+    public ResponseEntity<MensajeDTO<String>> gestionarEstadoReporte(
+            @Parameter(description = "DTO con los datos necesarios para cambiar el estado de un reporte", required = true)
+            @RequestBody GestionarEstadoReporteDTO dto
+    ) throws Exception {
+
+        reporteServicio.gestionarEstadoReporteAdministrador(dto);
+        return ResponseEntity.ok(new MensajeDTO<>(false, "Estado del reporte actualizado correctamente"));
+    }
+
+    /**
+     * Permite a un cliente cambiar el estado de su propio reporte a RESUELTO o ELIMINADO.
+     * Solo es posible si el estado actual no es RECHAZADO ni ELIMINADO.
+     *
+     * @param dto DTO con la información del cambio solicitado.
+     * @return Respuesta con mensaje de éxito o error.
+     */
+    @Operation(
+            summary = "Gestionar estado del reporte (Cliente)",
+            description = "Permite al cliente marcar su reporte como RESUELTO o ELIMINADO, si el estado actual lo permite. "
+                    + "No puede cambiar el estado si el reporte ya fue RECHAZADO o ELIMINADO. "
+                    + "Tampoco puede asignar estado VERIFICADO o RECHAZADO."
+    )
+    @PutMapping("/cliente/gestionar-estado-reporte-usuario")
+    public ResponseEntity<?> gestionarEstadoReporteCliente(@RequestBody GestionarEstadoReporteDTO dto) {
+        try {
+            reporteServicio.gestionarEstadoReporteCliente(dto);
+            return ResponseEntity.ok().body(
+                    Map.of("mensaje", "El estado del reporte ha sido actualizado correctamente.")
+            );
+        } catch (EstadoReporteInvalidoException e) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("error", true, "mensaje", e.getMessage())
+            );
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    Map.of("error", true, "mensaje", "Error al gestionar el estado del reporte: " + e.getMessage())
+            );
+        }
+    }
 
 
 }

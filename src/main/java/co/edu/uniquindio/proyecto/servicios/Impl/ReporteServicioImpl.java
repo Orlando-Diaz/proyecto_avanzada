@@ -1,11 +1,15 @@
 package co.edu.uniquindio.proyecto.servicios.Impl;
 
 import co.edu.uniquindio.proyecto.dto.*;
+import co.edu.uniquindio.proyecto.excepciones.EstadoReporteInvalidoException;
+import co.edu.uniquindio.proyecto.excepciones.RoleInvalidoException;
 import co.edu.uniquindio.proyecto.mapper.ReporteMapper;
 import co.edu.uniquindio.proyecto.modelo.documentos.*;
 import co.edu.uniquindio.proyecto.modelo.enums.Ciudad;
 import co.edu.uniquindio.proyecto.modelo.enums.EstadoReporte;
+import co.edu.uniquindio.proyecto.modelo.enums.Rol;
 import co.edu.uniquindio.proyecto.repositorios.CategoriaRepo;
+import co.edu.uniquindio.proyecto.repositorios.Historial_Reporte_Repo;
 import co.edu.uniquindio.proyecto.repositorios.ReporteRepo;
 import co.edu.uniquindio.proyecto.repositorios.UsuarioRepo;
 import co.edu.uniquindio.proyecto.seguridad.JWTUtils;
@@ -13,6 +17,7 @@ import co.edu.uniquindio.proyecto.servicios.interfaces.EmailServicio;
 import co.edu.uniquindio.proyecto.servicios.interfaces.ReporteServicio;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -37,6 +42,7 @@ import java.util.stream.Collectors;
 public class ReporteServicioImpl implements ReporteServicio {
 
     private final ReporteMapper reporteMapper;
+    private final Historial_Reporte_Repo historialReporteRepo;
     private final ReporteRepo reporteRepo;
     private final MongoTemplate mongoTemplate;
     private final UsuarioRepo usuarioRepo;
@@ -330,31 +336,45 @@ public class ReporteServicioImpl implements ReporteServicio {
                 .collect(Collectors.toList());
     }
 
-    //  Agregado 1:15 am 04-08-2025
+    /**
+     * Servicio utilizado por un administrador para gestionar el estado de un reporte
+     * @param gestionEstadoReporteDTO
+     * @throws EstadoReporteInvalidoException Excepcion para validar que un reporte no este eliminado
+     * ni que tenga el estado que se desea actualizar
+     */
     @Override
-    public String editarEstadoReporte(String idReporte, String idUsuario, String motivo, EstadoReporteDTO estadoReporteDTO) throws Exception {
+    public void gestionarEstadoReporteAdministrador(GestionarEstadoReporteDTO gestionEstadoReporteDTO) throws Exception {
+
+        //Validar role usuario
+        // obtener usuario
+        Usuario usuario = usuarioRepo.findById(new ObjectId(gestionEstadoReporteDTO.idUsuarioModifica()))
+                .orElseThrow(() -> new Exception("Usuario no encontrado"));
+        System.out.println("ROL DEL USUARIO: '" + usuario.getRol() + "'");
+
+        if (!usuario.getRol().equals(Rol.ADMINISTRADOR)) {
+            throw new RoleInvalidoException("ERROR. ROL INVALIDO PARA REALIZAR CAMBIOS");
+        }
 
         // Buscar el reporte
-        Reporte reporte = reporteRepo.findById(new ObjectId(idReporte))
+        Reporte reporte = reporteRepo.findById(new ObjectId(gestionEstadoReporteDTO.idReporte()))
                 .orElseThrow(() -> new Exception("Reporte no encontrado"));
 
         // Obtener el nuevo estado
-        EstadoReporte nuevoEstado = EstadoReporte.valueOf(estadoReporteDTO.estado());
+        EstadoReporte nuevoEstado = EstadoReporte.valueOf(gestionEstadoReporteDTO.estado().toString());
 
         // Validar que el nuevo estado sea diferente al actual
         if (reporte.getEstadoActual() == nuevoEstado) {
-            throw new Exception("El reporte ya tiene el estado: " + nuevoEstado);
+            throw new EstadoReporteInvalidoException("ERRORS. El reporte ya tiene el estado: " + nuevoEstado);
         }
 
         // Si el reporte está eliminado, no se permite cambiar el estado
         if (reporte.getEstadoActual() == EstadoReporte.ELIMINADO) {
-            throw new Exception("No se puede cambiar el estado de un reporte eliminado");
+            throw new EstadoReporteInvalidoException("ERROR. No se puede cambiar el estado de un reporte eliminado");
         }
 
-        // Registrar motivo y responsable (esto depende de tu diseño, aquí un ejemplo sencillo)
-        String observacion = "Estado cambiado de " + reporte.getEstadoActual() + " a " + nuevoEstado
-                + " por usuario: " + idUsuario + ". Motivo: " + motivo;
-
+        // Registrar motivo y responsable
+        String observacion = "Actualizacion de estado: Estado cambiado de " + reporte.getEstadoActual() + " a " + nuevoEstado
+                + " por usuario: " + gestionEstadoReporteDTO.idUsuarioModifica() + ". Motivo: " + gestionEstadoReporteDTO.motivo();
 
         // Construir historial del cambio
         Map<String, String> cambios = new HashMap<>();
@@ -374,10 +394,70 @@ public class ReporteServicioImpl implements ReporteServicio {
         // Agregar al historial del reporte
         reporte.getHistorial().add(historial);
 
-        // Guardar el reporte actualizado
+        // Guardar el reporte actualizado y el historial
         reporteRepo.save(reporte);
+        historialReporteRepo.save(historial);
 
-        return "Estado del reporte actualizado a: " + nuevoEstado;
+    }
+
+    /**
+     * Requerimiento utilizado para que un cliente gestione sus propios reportes
+     * Solamente puede eliminar o resolver un reporte
+     * @param gestionEstadoReporteDTO
+     * @throws Exception
+     */
+    @Override
+    public void gestionarEstadoReporteCliente(GestionarEstadoReporteDTO gestionEstadoReporteDTO) throws Exception {
+
+        Usuario usuario = usuarioRepo.findById(new ObjectId(gestionEstadoReporteDTO.idUsuarioModifica()))
+                .orElseThrow(() -> new Exception("Usuario no encontrado"));
+
+        // Buscar el reporte
+        Reporte reporte = reporteRepo.findById(new ObjectId(gestionEstadoReporteDTO.idReporte()))
+                .orElseThrow(() -> new Exception("Reporte no encontrado"));
+
+        EstadoReporte estadoActual = reporte.getEstadoActual();
+        EstadoReporte nuevoEstado = gestionEstadoReporteDTO.estado();
+
+        // Validar si el estado actual es RECHAZADO o ELIMINADO
+        if (estadoActual == EstadoReporte.RECHAZADO || estadoActual == EstadoReporte.ELIMINADO) {
+            throw new EstadoReporteInvalidoException("No se puede modificar un reporte con estado " + estadoActual);
+        }
+
+        // Validar que el nuevo estado sea RESUELTO o ELIMINADO
+        if (nuevoEstado != EstadoReporte.RESUELTO && nuevoEstado != EstadoReporte.ELIMINADO) {
+            throw new EstadoReporteInvalidoException("Solo puede marcar un reporte como RESUELTO o ELIMINADO");
+        }
+
+        // Si está en estado RESUELTO o VERIFICADO, solo puede eliminarse
+        if ((estadoActual == EstadoReporte.RESUELTO || estadoActual == EstadoReporte.VERIFICADO)
+                && nuevoEstado != EstadoReporte.ELIMINADO) {
+            throw new EstadoReporteInvalidoException("Un reporte en estado " + estadoActual + " solo puede ser eliminado");
+        }
+
+        // Si el estado es PENDIENTE, no puede marcarse como VERIFICADO o RECHAZADO (esto ya se controla arriba, pero por claridad)
+        if (estadoActual == EstadoReporte.PENDIENTE &&
+                (nuevoEstado == EstadoReporte.VERIFICADO || nuevoEstado == EstadoReporte.RECHAZADO)) {
+            throw new EstadoReporteInvalidoException("No se puede marcar como " + nuevoEstado + " un reporte pendiente");
+        }
+
+        // Guardar cambio de estado
+        Map<String, String> cambios = new HashMap<>();
+        cambios.put("estadoAnterior", estadoActual.name());
+        cambios.put("estadoNuevo", nuevoEstado.name());
+
+        HistorialReporte historial = HistorialReporte.builder()
+                .observaciones("Cambio de estado por el usuario dueño del reporte. Motivo: " + gestionEstadoReporteDTO.motivo())
+                .estado(nuevoEstado)
+                .fecha(LocalDateTime.now())
+                .cambios(cambios)
+                .build();
+
+        historialReporteRepo.save(historial);
+        reporte.setEstadoActual(nuevoEstado);
+        reporte.getHistorial().add(historial);
+
+        reporteRepo.save(reporte);
 
     }
 
