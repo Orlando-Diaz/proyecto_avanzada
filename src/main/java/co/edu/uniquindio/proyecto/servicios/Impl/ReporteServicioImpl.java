@@ -9,7 +9,7 @@ import co.edu.uniquindio.proyecto.modelo.enums.Ciudad;
 import co.edu.uniquindio.proyecto.modelo.enums.EstadoReporte;
 import co.edu.uniquindio.proyecto.modelo.enums.Rol;
 import co.edu.uniquindio.proyecto.repositorios.CategoriaRepo;
-import co.edu.uniquindio.proyecto.repositorios.Historial_Reporte_Repo;
+import co.edu.uniquindio.proyecto.repositorios.HistorialReporteRepo;
 import co.edu.uniquindio.proyecto.repositorios.ReporteRepo;
 import co.edu.uniquindio.proyecto.repositorios.UsuarioRepo;
 import co.edu.uniquindio.proyecto.seguridad.JWTUtils;
@@ -17,7 +17,6 @@ import co.edu.uniquindio.proyecto.servicios.interfaces.EmailServicio;
 import co.edu.uniquindio.proyecto.servicios.interfaces.ReporteServicio;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -42,7 +41,7 @@ import java.util.stream.Collectors;
 public class ReporteServicioImpl implements ReporteServicio {
 
     private final ReporteMapper reporteMapper;
-    private final Historial_Reporte_Repo historialReporteRepo;
+    private final HistorialReporteRepo historialReporteRepo;
     private final ReporteRepo reporteRepo;
     private final MongoTemplate mongoTemplate;
     private final UsuarioRepo usuarioRepo;
