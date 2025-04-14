@@ -4,6 +4,9 @@ import co.edu.uniquindio.proyecto.dto.CategoriaDTO;
 import co.edu.uniquindio.proyecto.dto.CrearCategoriaDTO;
 import co.edu.uniquindio.proyecto.dto.MensajeDTO;
 import co.edu.uniquindio.proyecto.servicios.interfaces.CategoriaServicio;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,6 +23,12 @@ public class CategoriaControlador {
 
     private final CategoriaServicio categoriaServicio;
 
+    @Operation(summary = "Crear una nueva categoría")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Categoría creada exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado, solo para administradores")
+    })
     @PostMapping("/crear/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<MensajeDTO<String>> crearCategoria(@Valid @RequestBody CrearCategoriaDTO dto) throws Exception {
@@ -29,6 +38,13 @@ public class CategoriaControlador {
         );
     }
 
+    @Operation(summary = "Actualizar una categoría existente")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Categoría actualizada exitosamente"),
+            @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
+            @ApiResponse(responseCode = "404", description = "Categoría no encontrada"),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado, solo para administradores")
+    })
     @PutMapping("/actualizar/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<MensajeDTO<String>> actualizarCategoria(
@@ -40,6 +56,12 @@ public class CategoriaControlador {
         );
     }
 
+    @Operation(summary = "Eliminar una categoría por ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Categoría eliminada exitosamente"),
+            @ApiResponse(responseCode = "404", description = "Categoría no encontrada"),
+            @ApiResponse(responseCode = "403", description = "Acceso denegado, solo para administradores")
+    })
     @DeleteMapping("/eliminar/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<Void> eliminarCategoria(@PathVariable String id) throws Exception {
@@ -47,6 +69,12 @@ public class CategoriaControlador {
         return ResponseEntity.noContent().build(); // 204 NO CONTENT
     }
 
+
+    @Operation(summary = "Obtener una categoría por ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Categoría obtenida exitosamente"),
+            @ApiResponse(responseCode = "404", description = "Categoría no encontrada")
+    })
     @GetMapping("/obtener/{id}")
     public ResponseEntity<MensajeDTO<CategoriaDTO>> obtenerCategoria(@PathVariable String id) throws Exception {
         return ResponseEntity.ok().body(
@@ -54,6 +82,10 @@ public class CategoriaControlador {
         );
     }
 
+    @Operation(summary = "Listar todas las categorías")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Lista de categorías obtenida exitosamente")
+    })
     @GetMapping("/listar")
     public ResponseEntity<MensajeDTO<List<CategoriaDTO>>> listarCategorias(
             @RequestParam(required = false) String nombre,

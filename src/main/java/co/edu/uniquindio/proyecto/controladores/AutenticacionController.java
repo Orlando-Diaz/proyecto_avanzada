@@ -5,6 +5,7 @@ import co.edu.uniquindio.proyecto.dto.MensajeDTO;
 import co.edu.uniquindio.proyecto.dto.TokenDTO;
 import co.edu.uniquindio.proyecto.servicios.interfaces.AuthServicio;
 import co.edu.uniquindio.proyecto.servicios.interfaces.UsuarioServicio;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,7 @@ public class AutenticacionController {
     private final AuthServicio authServicio;
     private final UsuarioServicio usuarioServicio;
 
+    @Operation(summary = "Inicio de sesión de un usuario.")
     @PostMapping("/login")
     public ResponseEntity<MensajeDTO<Object>> login(@RequestBody LoginDTO loginDTO) {
         try {

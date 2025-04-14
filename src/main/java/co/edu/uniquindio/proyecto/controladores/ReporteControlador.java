@@ -31,6 +31,8 @@ public class ReporteControlador {
     private final ReporteServicio reporteServicio;
     private final ReporteRepo reporteRepo;
 
+    // --- Operaciones CRUD de Reporte ---
+
     @Operation(summary = "Crear un reporte")
     @PostMapping
     public ResponseEntity<MensajeDTO<String>> crearReporte(@Valid @RequestBody CrearReporteDTO crearReporteDTO) throws Exception {
@@ -72,6 +74,8 @@ public class ReporteControlador {
         );
     }
 
+    // --- Operaciones de Comentarios ---
+
     @Operation(summary = "Agregar Comentario")
     @PostMapping("/{idReporte}/comentarios")
     public ResponseEntity<MensajeDTO<String>> agregarComentario(
@@ -90,9 +94,7 @@ public class ReporteControlador {
         return ResponseEntity.ok().body(new MensajeDTO<>(false, comentarios));
     }
 
-    /*
-    HISTORIAL DE CAMBIOS DE UN REPORTE
-     */
+    // --- Historial de Cambios de un Reporte ---
 
     @Operation(
             summary = "Obtener historial de cambios",
@@ -105,6 +107,8 @@ public class ReporteControlador {
         List<HistorialReporteDTO> historial = reporteServicio.obtenerHistorial(id);
         return ResponseEntity.ok(historial);
     }
+
+    // --- Marcar Reporte como Importante ---
 
 
     @PostMapping("/{id}/importante")
@@ -144,8 +148,8 @@ public class ReporteControlador {
         }
     }
 
+    // --- Reporte Anónimo ---
 
-    // CONTROLADOR DE CREAR UN REPORTE ANONIMO
     @Operation(summary = "Crear reporte anónimo")
     @PostMapping("/anonimos")
     public ResponseEntity<MensajeDTO<String>> crearReporteAnonimo(
@@ -161,9 +165,8 @@ public class ReporteControlador {
     }
 
 
-    /*
-    RECHAZAR UN REPORTE CON JUSTIFICAIÓN
-     */
+    // --- Rechazar un Reporte ---
+
     @Operation(summary = "Rechazar un reporte",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Reporte rechazado"),
@@ -185,6 +188,7 @@ public class ReporteControlador {
         }
     }
 
+    // --- Gestionar el Estado de un Reporte (Administrador) ---
 
     @Operation(
             summary = "Gestionar el estado de un reporte",
