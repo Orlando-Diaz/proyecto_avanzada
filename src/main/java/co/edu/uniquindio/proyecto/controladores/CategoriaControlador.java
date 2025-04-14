@@ -5,6 +5,7 @@ import co.edu.uniquindio.proyecto.dto.CrearCategoriaDTO;
 import co.edu.uniquindio.proyecto.dto.MensajeDTO;
 import co.edu.uniquindio.proyecto.servicios.interfaces.CategoriaServicio;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,7 +34,20 @@ public class CategoriaControlador {
     })
     @PostMapping("/crear/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<MensajeDTO<String>> crearCategoria(@Valid @RequestBody CrearCategoriaDTO dto) throws Exception {
+    public ResponseEntity<MensajeDTO<String>> crearCategoria(
+            @Parameter(
+                    name = "id",
+                    description = "ID único para la nueva categoría",
+                    required = true,
+                    example = "cat_64a7f8e0b27c1234567890ab"
+            )
+            @PathVariable(name = "id") String id,
+            @Parameter(
+                    name = "dto",
+                    description = "Datos de la categoría a crear",
+                    required = true
+            )
+            @Valid @RequestBody(required = true) CrearCategoriaDTO dto) throws Exception {
         categoriaServicio.crear(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 new MensajeDTO<>(false, "Categoría creada exitosamente")
@@ -50,8 +64,19 @@ public class CategoriaControlador {
     @PutMapping("/actualizar/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     public ResponseEntity<MensajeDTO<String>> actualizarCategoria(
-            @PathVariable String id,
-            @Valid @RequestBody CategoriaDTO categoriaDTO) throws Exception {
+            @Parameter(
+                    name = "id",
+                    description = "ID único de la categoría a actualizar",
+                    required = true,
+                    example = "cat_64a7f8e0b27c1234567890ab"
+            )
+            @PathVariable(name = "id") String id,
+            @Parameter(
+                    name = "categoriaDTO",
+                    description = "Datos actualizados de la categoría",
+                    required = true
+            )
+            @Valid @RequestBody(required = true) CategoriaDTO categoriaDTO) throws Exception {
         categoriaServicio.editar(id, categoriaDTO);
         return ResponseEntity.ok().body(
                 new MensajeDTO<>(false, "Categoría actualizada exitosamente")
@@ -66,7 +91,14 @@ public class CategoriaControlador {
     })
     @DeleteMapping("/eliminar/{id}")
     @PreAuthorize("hasRole('ADMINISTRADOR')")
-    public ResponseEntity<Void> eliminarCategoria(@PathVariable String id) throws Exception {
+    public ResponseEntity<Void> eliminarCategoria(
+            @Parameter(
+                    name = "id",
+                    description = "ID único de la categoría a eliminar",
+                    required = true,
+                    example = "cat_64a7f8e0b27c1234567890ab"
+            )
+            @PathVariable(name = "id") String id) throws Exception {
         categoriaServicio.eliminar(id);
         return ResponseEntity.noContent().build(); // 204 NO CONTENT
     }
@@ -78,7 +110,14 @@ public class CategoriaControlador {
             @ApiResponse(responseCode = "404", description = "Categoría no encontrada")
     })
     @GetMapping("/obtener/{id}")
-    public ResponseEntity<MensajeDTO<CategoriaDTO>> obtenerCategoria(@PathVariable String id) throws Exception {
+    public ResponseEntity<MensajeDTO<CategoriaDTO>> obtenerCategoria(
+            @Parameter(
+                    name = "id",
+                    description = "ID único de la categoría a obtener",
+                    required = true,
+                    example = "cat_64a7f8e0b27c1234567890ab"
+            )
+            @PathVariable(name = "id") String id) throws Exception {
         return ResponseEntity.ok().body(
                 new MensajeDTO<>(false, categoriaServicio.obtener(id))
         );
@@ -90,8 +129,20 @@ public class CategoriaControlador {
     })
     @GetMapping("/listar")
     public ResponseEntity<MensajeDTO<List<CategoriaDTO>>> listarCategorias(
-            @RequestParam(required = false) String nombre,
-            @RequestParam(defaultValue = "0") int pagina) {
+            @Parameter(
+                    name = "nombre",
+                    description = "Filtrar categorías por nombre (opcional)",
+                    required = false,
+                    example = "Medio Ambiente"
+            )
+            @RequestParam(name = "nombre", required = false) String nombre,
+            @Parameter(
+                    name = "pagina",
+                    description = "Número de página para paginación (inicia en 0)",
+                    required = false,
+                    example = "0"
+            )
+            @RequestParam(name = "pagina", defaultValue = "0") int pagina) {
         return ResponseEntity.ok().body(
                 new MensajeDTO<>(false, categoriaServicio.listarTodos(nombre, pagina))
         );

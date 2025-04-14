@@ -35,7 +35,13 @@ public class ReporteControlador {
 
     @Operation(summary = "Crear un reporte")
     @PostMapping
-    public ResponseEntity<MensajeDTO<String>> crearReporte(@Valid @RequestBody CrearReporteDTO crearReporteDTO) throws Exception {
+    public ResponseEntity<MensajeDTO<String>> crearReporte(
+            @Parameter(
+                    name = "crearReporteDTO",
+                    description = "Datos para la creación del reporte",
+                    required = true
+            )
+            @Valid @RequestBody(required = true) CrearReporteDTO crearReporteDTO) throws Exception {
         reporteServicio.crearReporte(crearReporteDTO);
         return ResponseEntity.ok().body(new MensajeDTO<>(false, "Reporte creado exitosamente"));
     }
@@ -43,8 +49,19 @@ public class ReporteControlador {
     @Operation(summary = "Editar un reporte")
     @PutMapping("/{id}")
     public ResponseEntity<MensajeDTO<String>> editarReporte(
-            @PathVariable String id,
-            @Valid @RequestBody EditarReporteDTO editarReporteDTO
+            @Parameter(
+                    name = "id",
+                    description = "ID único del reporte a editar",
+                    required = true,
+                    example = "64a7f8e0b27c1234567890ab"
+            )
+            @PathVariable(name = "id") String id,
+            @Parameter(
+                    name = "editarReporteDTO",
+                    description = "Datos actualizados del reporte",
+                    required = true
+            )
+            @Valid @RequestBody(required = true) EditarReporteDTO editarReporteDTO
     ) throws Exception {
         reporteServicio.editarReporte(id, editarReporteDTO); // Enviar ID y DTO
         return ResponseEntity.ok().body(new MensajeDTO<>(false, "Reporte actualizado exitosamente"));
@@ -52,23 +69,55 @@ public class ReporteControlador {
 
     @Operation(summary = "Eliminar un reporte")
     @DeleteMapping("/{id}")
-    public ResponseEntity<MensajeDTO<String>> eliminarReporte(@PathVariable String id) throws Exception {
+    public ResponseEntity<MensajeDTO<String>> eliminarReporte(
+            @Parameter(
+                    name = "id",
+                    description = "ID único del reporte a eliminar",
+                    required = true,
+                    example = "64a7f8e0b27c1234567890ab"
+            )
+            @PathVariable(name = "id") String id) throws Exception {
         reporteServicio.eliminarReporte(id);
         return ResponseEntity.ok().body(new MensajeDTO<>(false, "Reporte eliminado exitosamente"));
     }
 
     @Operation(summary = "Obtener reporte por ID")
     @GetMapping("/{id}")
-    public ResponseEntity<MensajeDTO<ReporteDTO>> obtenerReporte(@PathVariable String id) throws Exception {
+    public ResponseEntity<MensajeDTO<ReporteDTO>> obtenerReporte(
+            @Parameter(
+                    name = "id",
+                    description = "ID único del reporte a obtener",
+                    required = true,
+                    example = "64a7f8e0b27c1234567890ab"
+            )
+            @PathVariable(name = "id") String id) throws Exception {
         return ResponseEntity.ok().body(new MensajeDTO<>(false, reporteServicio.obtenerReportes(id)));
     }
 
     @Operation(summary = "Listar todos los reportes")
     @GetMapping
     public ResponseEntity<MensajeDTO<List<ReporteDTO>>> listarReportes(
-            @RequestParam(required = false) String nombre,
-            @RequestParam(required = false) String ciudad,
-            @RequestParam(required = false) String categoria) {
+            @Parameter(
+                    name = "nombre",
+                    description = "Filtrar reportes por nombre",
+                    required = false,
+                    example = "Contaminación río"
+            )
+            @RequestParam(name = "nombre", required = false) String nombre,
+            @Parameter(
+                    name = "ciudad",
+                    description = "Filtrar reportes por ciudad",
+                    required = false,
+                    example = "Armenia"
+            )
+            @RequestParam(name = "ciudad", required = false) String ciudad,
+            @Parameter(
+                    name = "categoria",
+                    description = "Filtrar reportes por categoría",
+                    required = false,
+                    example = "Medio Ambiente"
+            )
+            @RequestParam(name = "categoria", required = false) String categoria) {
         return ResponseEntity.ok().body(
                 new MensajeDTO<>(false, reporteServicio.listarTodos(nombre, ciudad, categoria))
         );
@@ -79,8 +128,19 @@ public class ReporteControlador {
     @Operation(summary = "Agregar Comentario")
     @PostMapping("/{idReporte}/comentarios")
     public ResponseEntity<MensajeDTO<String>> agregarComentario(
-            @PathVariable String idReporte,
-            @Valid @RequestBody ComentarioDTO comentarioDTO) throws Exception {
+            @Parameter(
+                    name = "idReporte",
+                    description = "ID único del reporte al que se agrega el comentario",
+                    required = true,
+                    example = "64a7f8e0b27c1234567890ab"
+            )
+            @PathVariable(name = "idReporte") String idReporte,
+            @Parameter(
+                    name = "comentarioDTO",
+                    description = "Datos del comentario a agregar",
+                    required = true
+            )
+            @Valid @RequestBody(required = true) ComentarioDTO comentarioDTO) throws Exception {
 
         String idComentario = reporteServicio.agregarComentario(idReporte, comentarioDTO);
         return ResponseEntity.ok().body(new MensajeDTO<>(false, idComentario));
@@ -89,7 +149,13 @@ public class ReporteControlador {
     @Operation(summary = "Listar Comentario")
     @GetMapping("/{idReporte}/comentarios")
     public ResponseEntity<MensajeDTO<List<ComentarioDTO>>> listarComentarios(
-            @PathVariable String idReporte) throws Exception {
+            @Parameter(
+                    name = "idReporte",
+                    description = "ID único del reporte del que se listarán los comentarios",
+                    required = true,
+                    example = "64a7f8e0b27c1234567890ab"
+            )
+            @PathVariable(name = "idReporte") String idReporte) throws Exception {
         List<ComentarioDTO> comentarios = reporteServicio.listarComentarios(idReporte);
         return ResponseEntity.ok().body(new MensajeDTO<>(false, comentarios));
     }
@@ -102,7 +168,13 @@ public class ReporteControlador {
     )
     @GetMapping("/{id}/historial")
     public ResponseEntity<List<HistorialReporteDTO>> obtenerHistorial(
-            @PathVariable String id) throws Exception {
+            @Parameter(
+                    name = "id",
+                    description = "ID único del reporte del que se obtendrá el historial",
+                    required = true,
+                    example = "64a7f8e0b27c1234567890ab"
+            )
+            @PathVariable(name = "id") String id) throws Exception {
 
         List<HistorialReporteDTO> historial = reporteServicio.obtenerHistorial(id);
         return ResponseEntity.ok(historial);
@@ -113,7 +185,13 @@ public class ReporteControlador {
 
     @PostMapping("/{id}/importante")
     public ResponseEntity<RespuestaImportanciaDTO> marcarImportante(
-            @PathVariable String id) {
+            @Parameter(
+                    name = "id",
+                    description = "ID único del reporte a marcar como importante",
+                    required = true,
+                    example = "64a7f8e0b27c1234567890ab"
+            )
+            @PathVariable(name = "id") String id) {
 
         try {
             // Servicio ahora devuelve el contador actualizado
@@ -153,7 +231,12 @@ public class ReporteControlador {
     @Operation(summary = "Crear reporte anónimo")
     @PostMapping("/anonimos")
     public ResponseEntity<MensajeDTO<String>> crearReporteAnonimo(
-            @Valid @RequestBody CrearReporteAnonimoDTO dto) {
+            @Parameter(
+                    name = "dto",
+                    description = "Datos para la creación del reporte anónimo",
+                    required = true
+            )
+            @Valid @RequestBody(required = true) CrearReporteAnonimoDTO dto) {
         try {
             reporteServicio.crearReporteAnonimo(dto);
             return ResponseEntity.ok()
@@ -176,8 +259,19 @@ public class ReporteControlador {
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     @PutMapping("/{id}/rechazar")
     public ResponseEntity<MensajeDTO<String>> rechazarReporte(
-            @PathVariable String id,
-            @Valid @RequestBody RechazarReporteDTO dto) {
+            @Parameter(
+                    name = "id",
+                    description = "ID único del reporte a rechazar",
+                    required = true,
+                    example = "64a7f8e0b27c1234567890ab"
+            )
+            @PathVariable(name = "id") String id,
+            @Parameter(
+                    name = "dto",
+                    description = "Datos con la justificación del rechazo",
+                    required = true
+            )
+            @Valid @RequestBody(required = true) RechazarReporteDTO dto) {
         try {
             reporteServicio.rechazarReporte(id, dto);
             return ResponseEntity.ok()
@@ -201,8 +295,12 @@ public class ReporteControlador {
     )
     @PutMapping("/gestionar-estado-reporte-admin")
     public ResponseEntity<MensajeDTO<String>> gestionarEstadoReporte(
-            @Parameter(description = "DTO con los datos necesarios para cambiar el estado de un reporte", required = true)
-            @RequestBody GestionarEstadoReporteDTO dto
+            @Parameter(
+                    name = "dto",
+                    description = "DTO con los datos necesarios para cambiar el estado de un reporte",
+                    required = true
+            )
+            @RequestBody(required = true) GestionarEstadoReporteDTO dto
     ) throws Exception {
 
         reporteServicio.gestionarEstadoReporteAdministrador(dto);
@@ -223,7 +321,13 @@ public class ReporteControlador {
                     + "Tampoco puede asignar estado VERIFICADO o RECHAZADO."
     )
     @PutMapping("/cliente/gestionar-estado-reporte-usuario")
-    public ResponseEntity<?> gestionarEstadoReporteCliente(@RequestBody GestionarEstadoReporteDTO dto) {
+    public ResponseEntity<?> gestionarEstadoReporteCliente(
+            @Parameter(
+                    name = "dto",
+                    description = "DTO con los datos necesarios para cambiar el estado del reporte (ID y nuevo estado)",
+                    required = true
+            )
+            @RequestBody(required = true) GestionarEstadoReporteDTO dto) {
         try {
             reporteServicio.gestionarEstadoReporteCliente(dto);
             return ResponseEntity.ok().body(
@@ -239,6 +343,4 @@ public class ReporteControlador {
             );
         }
     }
-
-
 }

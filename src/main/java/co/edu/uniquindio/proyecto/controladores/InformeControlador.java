@@ -4,6 +4,7 @@ import co.edu.uniquindio.proyecto.dto.*;
 import co.edu.uniquindio.proyecto.modelo.enums.EstadoReporte;
 import co.edu.uniquindio.proyecto.servicios.interfaces.ReporteServicio;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -42,9 +43,29 @@ public class InformeControlador {
     )
     @GetMapping("/categoria")
     public ResponseEntity<MensajeDTO<InformeCategoriaDTO>> obtenerInformePorCategoria(
-            @RequestParam(required = false) String categoria,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) {
+            @Parameter(
+                    name = "categoria",
+                    description = "Nombre de la categoría para filtrar los reportes",
+                    required = false,
+                    example = "Medio Ambiente"
+            )
+            @RequestParam(name = "categoria", required = false) String categoria,
+
+            @Parameter(
+                    name = "fechaInicio",
+                    description = "Fecha de inicio del rango de búsqueda (formato ISO)",
+                    required = false,
+                    example = "2023-01-01"
+            )
+            @RequestParam(name = "fechaInicio", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+
+            @Parameter(
+                    name = "fechaFin",
+                    description = "Fecha de fin del rango de búsqueda (formato ISO)",
+                    required = false,
+                    example = "2023-12-31"
+            )
+            @RequestParam(name = "fechaFin", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) {
 
         InformeCategoriaDTO informe = reporteServicio.generarInformePorCategoria(categoria, fechaInicio, fechaFin);
         return ResponseEntity.ok().body(new MensajeDTO<>(false, informe));
@@ -66,11 +87,45 @@ public class InformeControlador {
     )
     @GetMapping("/geografico")
     public ResponseEntity<MensajeDTO<InformeGeograficoDTO>> obtenerInformePorUbicacion(
-            @RequestParam Double latitud,
-            @RequestParam Double longitud,
-            @RequestParam Double radioKm,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) {
+            @Parameter(
+                    name = "latitud",
+                    description = "Latitud de la ubicación central para la búsqueda",
+                    required = true,
+                    example = "4.5353"
+            )
+            @RequestParam(name = "latitud") Double latitud,
+
+            @Parameter(
+                    name = "longitud",
+                    description = "Longitud de la ubicación central para la búsqueda",
+                    required = true,
+                    example = "-75.6738"
+            )
+            @RequestParam(name = "longitud") Double longitud,
+
+            @Parameter(
+                    name = "radioKm",
+                    description = "Radio de búsqueda en kilómetros",
+                    required = true,
+                    example = "5.0"
+            )
+            @RequestParam(name = "radioKm") Double radioKm,
+
+            @Parameter(
+                    name = "fechaInicio",
+                    description = "Fecha de inicio del rango de búsqueda (formato ISO)",
+                    required = false,
+                    example = "2023-01-01"
+            )
+            @RequestParam(name = "fechaInicio", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+
+            @Parameter(
+                    name = "fechaFin",
+                    description = "Fecha de fin del rango de búsqueda (formato ISO)",
+                    required = false,
+                    example = "2023-12-31"
+            )
+            @RequestParam(name = "fechaFin", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) {
 
         InformeGeograficoDTO informe = reporteServicio.generarInformePorUbicacion(
                 latitud, longitud, radioKm, fechaInicio, fechaFin);
@@ -92,9 +147,29 @@ public class InformeControlador {
     )
     @GetMapping("/categoria/pdf")
     public ResponseEntity<byte[]> generarInformePorCategoriaPDF(
-            @RequestParam(required = false) String categoria,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) throws Exception {
+            @Parameter(
+                    name = "categoria",
+                    description = "Nombre de la categoría para filtrar los reportes",
+                    required = false,
+                    example = "Medio Ambiente"
+            )
+            @RequestParam(name = "categoria", required = false) String categoria,
+
+            @Parameter(
+                    name = "fechaInicio",
+                    description = "Fecha de inicio del rango de búsqueda (formato ISO)",
+                    required = false,
+                    example = "2023-01-01"
+            )
+            @RequestParam(name = "fechaInicio", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+
+            @Parameter(
+                    name = "fechaFin",
+                    description = "Fecha de fin del rango de búsqueda (formato ISO)",
+                    required = false,
+                    example = "2023-12-31"
+            )
+            @RequestParam(name = "fechaFin", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) throws Exception {
 
         byte[] pdfBytes = reporteServicio.generarInformePorCategoriaPDF(categoria, fechaInicio, fechaFin);
 
@@ -122,11 +197,45 @@ public class InformeControlador {
     )
     @GetMapping("/geografico/pdf")
     public ResponseEntity<byte[]> generarInformePorUbicacionPDF(
-            @RequestParam Double latitud,
-            @RequestParam Double longitud,
-            @RequestParam Double radioKm,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) throws Exception {
+            @Parameter(
+                    name = "latitud",
+                    description = "Latitud de la ubicación central para la búsqueda",
+                    required = true,
+                    example = "4.5353"
+            )
+            @RequestParam(name = "latitud") Double latitud,
+
+            @Parameter(
+                    name = "longitud",
+                    description = "Longitud de la ubicación central para la búsqueda",
+                    required = true,
+                    example = "-75.6738"
+            )
+            @RequestParam(name = "longitud") Double longitud,
+
+            @Parameter(
+                    name = "radioKm",
+                    description = "Radio de búsqueda en kilómetros",
+                    required = true,
+                    example = "5.0"
+            )
+            @RequestParam(name = "radioKm") Double radioKm,
+
+            @Parameter(
+                    name = "fechaInicio",
+                    description = "Fecha de inicio del rango de búsqueda (formato ISO)",
+                    required = false,
+                    example = "2023-01-01"
+            )
+            @RequestParam(name = "fechaInicio", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
+
+            @Parameter(
+                    name = "fechaFin",
+                    description = "Fecha de fin del rango de búsqueda (formato ISO)",
+                    required = false,
+                    example = "2023-12-31"
+            )
+            @RequestParam(name = "fechaFin", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) throws Exception {
 
         byte[] pdfBytes = reporteServicio.generarInformePorUbicacionPDF(
                 latitud, longitud, radioKm, fechaInicio, fechaFin);
@@ -167,7 +276,13 @@ public class InformeControlador {
     )
     @GetMapping("/estado/{estado}")
     public ResponseEntity<MensajeDTO<List<ReporteDTO>>> obtenerReportesPorEstado(
-            @PathVariable EstadoReporte estado) {
+            @Parameter(
+                    name = "estado",
+                    description = "Estado del reporte a filtrar (PENDIENTE, VERIFICADO, RECHAZADO, etc.)",
+                    required = true,
+                    example = "VERIFICADO"
+            )
+            @PathVariable(name = "estado") EstadoReporte estado) {
 
         List<ReporteDTO> reportes = reporteServicio.listarReportesPorEstado(estado);
         return ResponseEntity.ok().body(new MensajeDTO<>(false, reportes));

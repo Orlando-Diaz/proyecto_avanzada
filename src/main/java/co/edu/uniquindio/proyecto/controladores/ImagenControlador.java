@@ -3,6 +3,7 @@ package co.edu.uniquindio.proyecto.controladores;
 import co.edu.uniquindio.proyecto.dto.MensajeDTO;
 import co.edu.uniquindio.proyecto.servicios.interfaces.ImagenServicio;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,7 +31,12 @@ public class ImagenControlador {
     })
     @PostMapping
     public ResponseEntity<MensajeDTO<String>> subirImagen(
-            @RequestParam("imagen") MultipartFile imagen) throws Exception {
+            @Parameter(
+                    name = "imagen",
+                    description = "Archivo de imagen a subir (JPEG, PNG, GIF)",
+                    required = true
+            )
+            @RequestParam(name = "imagen") MultipartFile imagen) throws Exception {
 
         Map resultado = imagenServicio.subirImagen(imagen);
         String url = (String) resultado.get("url");
@@ -45,7 +51,13 @@ public class ImagenControlador {
     })
     @DeleteMapping("/{idImagen}")
     public ResponseEntity<MensajeDTO<String>> eliminarImagen(
-            @PathVariable String idImagen) throws Exception {
+            @Parameter(
+                    name = "idImagen",
+                    description = "ID único de la imagen a eliminar",
+                    required = true,
+                    example = "img_64a7f8e0b27c1234567890ab"
+            )
+            @PathVariable(name = "idImagen") String idImagen) throws Exception {
 
         imagenServicio.eliminarImagen(idImagen);
 
@@ -59,7 +71,12 @@ public class ImagenControlador {
     })
     @PostMapping("/multiple")
     public ResponseEntity<MensajeDTO<List<String>>> subirMultiplesImagenes(
-            @RequestParam("imagenes") List<MultipartFile> imagenes) throws Exception {
+            @Parameter(
+                    name = "imagenes",
+                    description = "Lista de archivos de imágenes a subir (JPEG, PNG, GIF)",
+                    required = true
+            )
+            @RequestParam(name = "imagenes") List<MultipartFile> imagenes) throws Exception {
 
         List<String> urls = new ArrayList<>();
 

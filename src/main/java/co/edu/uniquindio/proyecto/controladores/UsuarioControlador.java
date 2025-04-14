@@ -35,7 +35,12 @@ public class UsuarioControlador {
     )
     @PostMapping
     public ResponseEntity<MensajeDTO<String>> crear(
-            @Valid @RequestBody CrearUsuarioDTO cuenta) throws Exception {
+            @Parameter(
+                    name = "cuenta",
+                    description = "Datos para la creación del nuevo usuario",
+                    required = true
+            )
+            @Valid @RequestBody(required = true) CrearUsuarioDTO cuenta) throws Exception {
         usuarioServicio.crear(cuenta);
         return ResponseEntity.ok(new MensajeDTO<>(false, "Su registro ha sido exitoso"));
     }
@@ -51,8 +56,13 @@ public class UsuarioControlador {
     )
     @GetMapping("/{id}")
     public ResponseEntity<MensajeDTO<UsuarioDTO>> obtener(
-            @Parameter(description = "ID único del usuario")
-            @PathVariable String id) throws Exception {
+            @Parameter(
+                    name = "id",
+                    description = "ID único del usuario (formato ObjectId)",
+                    required = true,
+                    example = "64a7f8e0b27c1234567890ab"
+            )
+            @PathVariable(name = "id") String id) throws Exception {
         UsuarioDTO info = usuarioServicio.obtener(id);
         return ResponseEntity.ok(new MensajeDTO<>(false, info));
     }
@@ -68,8 +78,13 @@ public class UsuarioControlador {
     )
     @DeleteMapping("/{id}")
     public ResponseEntity<MensajeDTO<String>> eliminar(
-            @Parameter(description = "ID del usuario a eliminar")
-            @PathVariable String id) throws Exception {
+            @Parameter(
+                    name = "id",
+                    description = "ID del usuario a eliminar",
+                    required = true,
+                    example = "64a7f8e0b27c1234567890ab"
+            )
+            @PathVariable(name = "id") String id) throws Exception {
         usuarioServicio.eliminar(id);
         return ResponseEntity.ok(new MensajeDTO<>(false, "Cuenta eliminada exitosamente"));
     }
@@ -83,14 +98,29 @@ public class UsuarioControlador {
     )
     @GetMapping
     public ResponseEntity<MensajeDTO<List<UsuarioDTO>>> listarTodos(
-            @Parameter(description = "Filtro por nombre ")
-            @RequestParam(required = false) String nombre,
+            @Parameter(
+                    name = "nombre",
+                    description = "Filtro por nombre de usuario",
+                    required = false,
+                    example = "Juan"
+            )
+            @RequestParam(name = "nombre", required = false) String nombre,
 
-            @Parameter(description = "Filtro por ciudad")
-            @RequestParam(required = false) String ciudad,
+            @Parameter(
+                    name = "ciudad",
+                    description = "Filtro por ciudad del usuario",
+                    required = false,
+                    example = "Armenia"
+            )
+            @RequestParam(name = "ciudad", required = false) String ciudad,
 
-            @Parameter(description = "Número de página (0-based)", example = "0")
-            @RequestParam(defaultValue = "0") int pagina) {
+            @Parameter(
+                    name = "pagina",
+                    description = "Número de página (0-based)",
+                    required = false,
+                    example = "0"
+            )
+            @RequestParam(name = "pagina", defaultValue = "0") int pagina) {
 
         List<UsuarioDTO> usuarios = usuarioServicio.listarTodos(nombre, ciudad, pagina);
         return ResponseEntity.ok(new MensajeDTO<>(false, usuarios));
@@ -107,9 +137,19 @@ public class UsuarioControlador {
     )
     @PutMapping("/{id}")
     public ResponseEntity<MensajeDTO<String>> editar(
-            @Parameter(description = "ID del usuario a editar")
-            @PathVariable String id,
-            @Valid @RequestBody EditarUsuarioDTO cuenta
+            @Parameter(
+                    name = "id",
+                    description = "ID del usuario a editar",
+                    required = true,
+                    example = "64a7f8e0b27c1234567890ab"
+            )
+            @PathVariable(name = "id") String id,
+            @Parameter(
+                    name = "cuenta",
+                    description = "Datos actualizados del usuario",
+                    required = true
+            )
+            @Valid @RequestBody(required = true) EditarUsuarioDTO cuenta
     ) throws Exception {
         usuarioServicio.editar(id, cuenta);
         return ResponseEntity.ok(new MensajeDTO<>(false, "Cuenta editada exitosamente"));
@@ -126,9 +166,19 @@ public class UsuarioControlador {
     )
     @PutMapping("/{email}/cambiarEstadoUsuario")
     public ResponseEntity<MensajeDTO<String>> cambiarEstadoUsuario(
-            @Parameter(description = "Correo del usuario")
-            @PathVariable ("email") String email,
-            @RequestBody EstadoUsuarioDTO estadoDTO) throws Exception {
+            @Parameter(
+                    name = "email",
+                    description = "Correo electrónico del usuario",
+                    required = true,
+                    example = "usuario@ejemplo.com"
+            )
+            @PathVariable(name = "email") String email,
+            @Parameter(
+                    name = "estadoDTO",
+                    description = "DTO con el nuevo estado del usuario",
+                    required = true
+            )
+            @RequestBody(required = true) EstadoUsuarioDTO estadoDTO) throws Exception {
 
         usuarioServicio.modificarEstadoCuentaUsuario(email, estadoDTO);
         return ResponseEntity.ok(new MensajeDTO<>(false, "Estado actualizado correctamente"));
@@ -146,9 +196,19 @@ public class UsuarioControlador {
     )
     @PutMapping("/{email}/verificarCodigoActivacionUsuario")
     public ResponseEntity<MensajeDTO<String>> verificarCodigoUsuario(
-            @Parameter(description = "Correo del usuario")
-            @PathVariable ("email") String email,
-            @RequestBody CodigoDTO codigoDTO) throws Exception {
+            @Parameter(
+                    name = "email",
+                    description = "Correo electrónico del usuario",
+                    required = true,
+                    example = "usuario@ejemplo.com"
+            )
+            @PathVariable(name = "email") String email,
+            @Parameter(
+                    name = "codigoDTO",
+                    description = "DTO con el código de verificación",
+                    required = true
+            )
+            @RequestBody(required = true) CodigoDTO codigoDTO) throws Exception {
 
         usuarioServicio.verificarCodigoActivarUsuario(email, codigoDTO.codigo());
         return ResponseEntity.ok(new MensajeDTO<>(false, "Cuenta activada correctamente"));
@@ -165,7 +225,12 @@ public class UsuarioControlador {
     )
     @PostMapping("/recuperarContrasenia")
     public ResponseEntity<MensajeDTO<String>> recuperarContrasenia(
-            @RequestBody RecuperarContraseniaDTO recuperarPasswordDTO) throws Exception {
+            @Parameter(
+                    name = "recuperarPasswordDTO",
+                    description = "DTO con el correo electrónico para recuperar contraseña",
+                    required = true
+            )
+            @RequestBody(required = true) RecuperarContraseniaDTO recuperarPasswordDTO) throws Exception {
 
         usuarioServicio.recuperarContrasenia(recuperarPasswordDTO);
         return ResponseEntity.ok(new MensajeDTO<>(false, "Código enviado correctamente al correo"));
@@ -183,12 +248,14 @@ public class UsuarioControlador {
     )
     @PutMapping("/cambiarContrasenia")
     public ResponseEntity<MensajeDTO<String>> cambiarContrasenia(
-            @RequestBody CambiarPasswordDTO cambiarPasswordDTO) throws Exception {
+            @Parameter(
+                    name = "cambiarPasswordDTO",
+                    description = "DTO con el correo, código de verificación y nueva contraseña",
+                    required = true
+            )
+            @RequestBody(required = true) CambiarPasswordDTO cambiarPasswordDTO) throws Exception {
 
         usuarioServicio.cambiarContrasenia(cambiarPasswordDTO);
         return ResponseEntity.ok(new MensajeDTO<>(false, "Contraseña actualizada correctamente"));
     }
-
-
-
 }
