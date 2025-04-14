@@ -69,13 +69,13 @@ public class UsuarioServicioImpl implements UsuarioServicio {
 
     /**
      * Metodo que modifica el estado de un usuario
-     * @param idUsuario Usuario al que se le modificara el estado
+     * @param email correo al que se le modificara el estado
      * @param estadoUsuarioDTO ACTIVO/INACTIVO/ELIMINADO
      * @throws Exception
      */
-    public void modificarEstadoCuentaUsuario(String idUsuario, EstadoUsuarioDTO estadoUsuarioDTO) throws Exception {
-        Usuario usuario = usuarioRepo.findById(new ObjectId(idUsuario))
-                .orElseThrow(() -> new UsuarioInexistente("Usuario no encontrado"));
+    public void modificarEstadoCuentaUsuario(String email, EstadoUsuarioDTO estadoUsuarioDTO) throws Exception {
+        Usuario usuario = usuarioRepo.findByEmail(email)
+                .orElseThrow(() -> new CorreoInexistenteException("Usuario no encontrado"));
 
         if (estadoUsuarioDTO.nuevoEstado()==null){
             throw new EstadoCuentaInvalidoException("ERROR. ESTADO NULL");
@@ -98,16 +98,16 @@ public class UsuarioServicioImpl implements UsuarioServicio {
     /**
      * Verifica si el código ingresado por el usuario es correcto y aún está dentro del tiempo permitido (15 minutos).
      * Si ambas condiciones se cumplen, la cuenta queda activa, de lo conntrario lanza una excepcion
-     * @param idUsuario ID del usuario a verificar.
+     * @param email correo del usuario a verificar.
      * @param codigo Código ingresado por el usuario.
      * @return true si el código es válido y vigente.
      * @throws UsuarioInexistente si no se encuentra el usuario.
      * @throws CodigoVerificacionNoCoincideException si el código no coincide con el registrado.
      */
     @Override
-    public void verificarCodigoActivarUsuario(String idUsuario, String codigo) throws Exception {
-        Usuario usuario = usuarioRepo.findById(new ObjectId(idUsuario))
-                .orElseThrow(() -> new UsuarioInexistente("Usuario no encontrado en el sistema"));
+    public void verificarCodigoActivarUsuario(String email, String codigo) throws Exception {
+        Usuario usuario = usuarioRepo.findByEmail(email)
+                .orElseThrow(() -> new CorreoInexistenteException("Correo no encontrado en el sistema"));
 
         // Validar que el código coincida
         if (!usuario.getCodigoValidacion().equals(codigo)) {

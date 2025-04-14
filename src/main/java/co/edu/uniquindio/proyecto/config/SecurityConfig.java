@@ -40,7 +40,7 @@ public class SecurityConfig {
                         // Endpoints PÚBLICOS (sin autenticación)
                         .requestMatchers(
                                 "/api/auth/**",  // ¡ESTA LÍNEA ES CLAVE! Incluye /api/auth/login
-                                "/api/usuarios/{id}/verificarCodigo",
+                                "/api/usuarios/{email}/verificarCodigoActivacionUsuario",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",

@@ -8,9 +8,9 @@ public interface UsuarioServicio {
 
     void crear(CrearUsuarioDTO crearUsuarioDTO) throws Exception;
 
-    void modificarEstadoCuentaUsuario(String idUsuario, EstadoUsuarioDTO estadoCuentaUsuario) throws Exception;
+    void modificarEstadoCuentaUsuario(String email, EstadoUsuarioDTO estadoCuentaUsuario) throws Exception;
 
-    void verificarCodigoActivarUsuario(String idUsuario, String codigo) throws Exception;
+    void verificarCodigoActivarUsuario(String email, String codigo) throws Exception;
 
     void eliminar(String id) throws Exception;
     void editar(String id, EditarUsuarioDTO cuenta) throws Exception;

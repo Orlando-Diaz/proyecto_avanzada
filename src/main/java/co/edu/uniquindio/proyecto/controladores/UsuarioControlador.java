@@ -20,7 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/usuarios")
-public class Usuariocontrolador {
+public class UsuarioControlador {
 
     private final UsuarioServicio usuarioServicio;
 
@@ -124,13 +124,13 @@ public class Usuariocontrolador {
                     @ApiResponse(responseCode = "400", description = "Estado inválido")
             }
     )
-    @PutMapping("/{id}/cambiarEstadoUsuario")
+    @PutMapping("/{email}/cambiarEstadoUsuario")
     public ResponseEntity<MensajeDTO<String>> cambiarEstadoUsuario(
-            @Parameter(description = "ID del usuario")
-            @PathVariable String id,
+            @Parameter(description = "Correo del usuario")
+            @PathVariable ("email") String email,
             @RequestBody EstadoUsuarioDTO estadoDTO) throws Exception {
 
-        usuarioServicio.modificarEstadoCuentaUsuario(id, estadoDTO);
+        usuarioServicio.modificarEstadoCuentaUsuario(email, estadoDTO);
         return ResponseEntity.ok(new MensajeDTO<>(false, "Estado actualizado correctamente"));
     }
 
@@ -144,13 +144,13 @@ public class Usuariocontrolador {
                     @ApiResponse(responseCode = "400", description = "Código inválido o expirado")
             }
     )
-    @PutMapping("/{id}/verificarCodigoCuentaUsuario")
+    @PutMapping("/{email}/verificarCodigoActivacionUsuario")
     public ResponseEntity<MensajeDTO<String>> verificarCodigoUsuario(
-            @Parameter(description = "ID del usuario")
-            @PathVariable String id,
+            @Parameter(description = "Correo del usuario")
+            @PathVariable ("email") String email,
             @RequestBody CodigoDTO codigoDTO) throws Exception {
 
-        usuarioServicio.verificarCodigoActivarUsuario(id, codigoDTO.codigo());
+        usuarioServicio.verificarCodigoActivarUsuario(email, codigoDTO.codigo());
         return ResponseEntity.ok(new MensajeDTO<>(false, "Cuenta activada correctamente"));
     }
 
