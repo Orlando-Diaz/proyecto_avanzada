@@ -6,6 +6,7 @@ import co.edu.uniquindio.proyecto.dto.TokenDTO;
 import co.edu.uniquindio.proyecto.servicios.interfaces.AuthServicio;
 import co.edu.uniquindio.proyecto.servicios.interfaces.UsuarioServicio;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Tag(name = "Login", description = "Inicio de sesión")
 public class AutenticacionController {
 
     private final AuthServicio authServicio;

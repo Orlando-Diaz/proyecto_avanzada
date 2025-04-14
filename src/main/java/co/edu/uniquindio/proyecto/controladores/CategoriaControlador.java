@@ -7,6 +7,7 @@ import co.edu.uniquindio.proyecto.servicios.interfaces.CategoriaServicio;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/categorias")
 @RequiredArgsConstructor
+@Tag(name = "Categoría", description = "Generación de categorías")
 public class CategoriaControlador {
 
     private final CategoriaServicio categoriaServicio;
