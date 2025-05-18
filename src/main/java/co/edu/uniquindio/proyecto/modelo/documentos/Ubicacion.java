@@ -1,5 +1,6 @@
 package co.edu.uniquindio.proyecto.modelo.documentos;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,15 +9,11 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Ubicacion {
 
-    private String latitud;
-    private String longitud;
-
-    @Builder
-    public Ubicacion(String latitud, String longitud) {
-        this.latitud = latitud;
-        this.longitud = longitud;
-    }
+    private double latitud;
+    private double longitud;
 
 }

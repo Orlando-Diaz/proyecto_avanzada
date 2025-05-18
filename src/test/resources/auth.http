@@ -1,0 +1,46 @@
+### GET request to example server
+GET https://examples.http-client.intellij.net/get
+    ?generated-in=IntelliJ IDEA
+
+
+{
+  "email": "admin@example.com",
+  "password": "admin123"
+}
+
+> {%
+    client.test("Login exitoso", function() {
+        client.assert(response.status === 200, "El status debería ser 200");
+        client.assert(response.body.token !== undefined, "Debería retornar un token");
+    });
+%}
+
+### Login con credenciales inválidas
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "noexiste@example.com",
+  "password": "password123"
+}
+
+> {%
+    client.test("Login fallido", function() {
+        client.assert(response.status === 401, "El status debería ser 401");
+    });
+%}
+
+### Login con formato incorrecto
+POST http://localhost:8080/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "",
+  "password": ""
+}
+
+> {%
+    client.test("Validación de campos", function() {
+        client.assert(response.status === 400, "El status debería ser 400");
+    });
+%}

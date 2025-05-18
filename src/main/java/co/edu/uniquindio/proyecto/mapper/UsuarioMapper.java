@@ -10,16 +10,23 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
-public interface UsuarioMapper {
+public interface    UsuarioMapper {
 
     @Mapping(target = "rol", constant = "CLIENTE")
     @Mapping(target = "estado", constant = "INACTIVO")
     @Mapping(target = "fechaRegistro", expression = "java(java.time.LocalDateTime.now())")
     Usuario toDocument(CrearUsuarioDTO usuarioDTO);
 
-    UsuarioDTO toDTO(Usuario usuario);
-
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "estado", ignore = true)
+    @Mapping(target = "rol", ignore = true)
+    @Mapping(target = "fechaRegistro", ignore = true)
+    @Mapping(target = "codigoValidacion", ignore = true)
+    @Mapping(target = "email", ignore = true)
+    @Mapping(target = "password", ignore = true)
     void toDocument(EditarUsuarioDTO editarUsuarioDTO, @MappingTarget Usuario usuario);
+
+    UsuarioDTO toDTO(Usuario usuario);
 
     // Metodo para mapear de ObjectId a String
     default String map(ObjectId value) {

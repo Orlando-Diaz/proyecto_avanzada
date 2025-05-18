@@ -1,29 +1,61 @@
+// Cambios en la interfaz ReporteServicio.java
+
 package co.edu.uniquindio.proyecto.servicios.interfaces;
 
-import co.edu.uniquindio.proyecto.dto.ReporteDTO;
-import org.springframework.stereotype.Service;
+import co.edu.uniquindio.proyecto.dto.*;
+import co.edu.uniquindio.proyecto.modelo.enums.EstadoReporte;
 
+import java.time.LocalDate;
 import java.util.List;
 
-@Service
 public interface ReporteServicio {
 
-    public static void crearReporte(ReporteDTO reporte) throws Exception{
-    }
+    void crearReporte(CrearReporteDTO crearReporteDTO) throws Exception;
 
-    public static void editarReporte(ReporteDTO Reporte) throws Exception{
-    }
+    void editarReporte(String id, EditarReporteDTO editarReporteDTO) throws Exception;
 
-    public static void eliminarReporte(String id) throws Exception{
-    }
+    void eliminarReporte(String id) throws Exception;
 
-    public static ReporteDTO obtenerReportes(String id) throws Exception{
-        return null;
-    }
+    ReporteDTO obtenerReportes(String id) throws Exception;
 
-    public static List<ReporteDTO> listarTodos(){
-        return List.of();
-    }
+    List<ReporteDTO> listarTodos();
 
-    List<ReporteDTO> listarTodos(String nombre, String ciudad);
+    List<ReporteDTO> listarTodos(String nombre, String ciudad, String categoria);
+
+    String agregarComentario(String idReporte, ComentarioDTO comentarioDTO) throws Exception;
+
+    List<ComentarioDTO> listarComentarios(String idReporte) throws Exception;
+
+    List<HistorialReporteDTO> obtenerHistorial(String idReporte) throws Exception;
+
+    int marcarComoImportante(String idReporte) throws Exception;
+
+    List<ReporteDTO> listarReportesOrdenadosPorImportancia();
+
+    void gestionarEstadoReporteAdministrador(GestionarEstadoReporteDTO gestionEstadoReporteDTO) throws Exception;
+
+    void gestionarEstadoReporteCliente(GestionarEstadoReporteDTO gestionEstadoReporteDTO) throws Exception;
+
+    InformeCategoriaDTO generarInformePorCategoria(String categoria, LocalDate fechaInicio, LocalDate fechaFin);
+
+    InformeGeograficoDTO generarInformePorUbicacion(Double latitud, Double longitud, Double radioKm, LocalDate fechaInicio, LocalDate fechaFin);
+
+    List<ReporteDTO> listarReportesPorEstado(EstadoReporte estado);
+
+    EstadisticasGeneralesDTO obtenerEstadisticasGenerales();
+
+    byte[] generarInformePorCategoriaPDF(String categoria, LocalDate fechaInicio, LocalDate fechaFin) throws Exception;
+
+    byte[] generarInformePorUbicacionPDF(Double latitud, Double longitud, Double radioKm, LocalDate fechaInicio, LocalDate fechaFin) throws Exception;
+
+    void crearReporteAnonimo(CrearReporteAnonimoDTO dto) throws Exception;
+
+    void rechazarReporte(String idReporte, RechazarReporteDTO dto) throws Exception;
+
+    List<ReporteDTO> listarReportesPorUsuario(String idUsuario) throws Exception;
+
+    // Nuevos métodos
+    boolean verificarPropietarioReporte(String idReporte, String emailUsuario) throws Exception;
+
+    List<ReporteDTO> listarReportesPorEmailUsuario(String emailUsuario) throws Exception;
 }

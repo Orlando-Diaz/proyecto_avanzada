@@ -9,23 +9,23 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-@NoArgsConstructor
-@Document("comentarios")
+@RequiredArgsConstructor
+@Document("comentario")
 public class Comentario {
 
     @Id
     @EqualsAndHashCode.Include
     private ObjectId id;
-    private String mensaje;
+    private String contenido;
     private LocalDateTime fecha;
-    private ObjectId clienteId;
+    private ObjectId idUsuario;
 
     @Builder
-    public Comentario(String mensaje, LocalDateTime fecha, ObjectId id, ObjectId clienteId) {
-        this.mensaje = mensaje;
+    public Comentario(String contenido, LocalDateTime fecha, ObjectId id, ObjectId idUsuario) {
+        this.contenido = contenido;
         this.fecha = fecha;
         this.id = id;
-        this.clienteId = clienteId;
+        this.idUsuario = idUsuario;
         this.id = new ObjectId();
     }
 }

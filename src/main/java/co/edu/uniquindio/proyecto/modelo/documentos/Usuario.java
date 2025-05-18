@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@ToString
 @NoArgsConstructor
 @Document("usuarios")
 public class Usuario {
@@ -28,10 +29,16 @@ public class Usuario {
     private String password;
     private Rol rol;
     private EstadoUsuario estado;
-    private LocalDateTime fechaRegistro;
+    private LocalDateTime fechaRegistro; //FECHA DE REGISTRO DE LA CUENTA. NO CAMBIARA EN EL TIEMPO
+
+    private String codigoValidacion; //CODIGO QUE SE USARA PARA ACTIVACION DE CUENTA Y RECUPERACION DE CONTRASENIA. CAMBIARA EN EL TIEMPO
+    private LocalDateTime fechaCodigoValidacion; //Fecha de generacion del codigo de validacion.
+
 
     @Builder
-    public Usuario(String nombre, Ciudad ciudad, String direccion, String email, String telefono, String password, Rol rol, EstadoUsuario estado, LocalDateTime fechaRegistro) {
+    public Usuario(String nombre, Ciudad ciudad, String direccion, String email, String telefono,
+                   String password, Rol rol, EstadoUsuario estado, LocalDateTime fechaRegistro,
+                   String codigoValidacion, LocalDateTime fechCodigoValidacion) {
         this.nombre = nombre;
         this.ciudad = ciudad;
         this.direccion = direccion;
@@ -41,6 +48,10 @@ public class Usuario {
         this.rol = rol;
         this.estado = estado;
         this.fechaRegistro = fechaRegistro;
+
+        //Agregados el 04/09
+        this.codigoValidacion = codigoValidacion;
+        this.fechaCodigoValidacion = fechCodigoValidacion;
     }
 }
 
