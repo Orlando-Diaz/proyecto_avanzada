@@ -1,3 +1,5 @@
+// Actualización de NotificacionServicioImpl para usar MapStruct correctamente
+
 package co.edu.uniquindio.proyecto.servicios.Impl;
 
 import co.edu.uniquindio.proyecto.dto.EnviarCorreoDTO;
@@ -6,7 +8,6 @@ import co.edu.uniquindio.proyecto.mapper.NotificacionMapper;
 import co.edu.uniquindio.proyecto.modelo.documentos.Notificacion;
 import co.edu.uniquindio.proyecto.repositorios.NotificacionRepo;
 import co.edu.uniquindio.proyecto.servicios.interfaces.NotificacionServicio;
-
 
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
@@ -22,7 +23,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class NotificacionServicioImpl implements NotificacionServicio {
-
 
     private final NotificacionRepo notificacionRepo;
     private final NotificacionMapper notificacionMapper;
@@ -44,10 +44,18 @@ public class NotificacionServicioImpl implements NotificacionServicio {
                 notificacionDTO.titulo())
                 : notificacionDTO;
 
-        // Guardar en la base de datos
+        // Convertir DTO a entidad usando MapStruct
         Notificacion notificacion = notificacionMapper.toEntity(dtoConFecha);
+
+        // Si no tiene ID, generamos uno nuevo
+        if (notificacion.getId() == null) {
+            notificacion.setId(new ObjectId());
+        }
+
+        // Guardar en la base de datos
         Notificacion guardada = notificacionRepo.save(notificacion);
 
+        // Convertir entidad guardada de vuelta a DTO usando MapStruct
         NotificacionDTO dto = notificacionMapper.toDTO(guardada);
 
         // Enviar por WebSocket
@@ -58,21 +66,28 @@ public class NotificacionServicioImpl implements NotificacionServicio {
 
     @Override
     public void enviarNotificacionPorWebSocket(NotificacionDTO notificacion) {
-        // Enviamos al usuario específico
-        messagingTemplate.convertAndSendToUser(
-                notificacion.idUsuario(),
-                "/queue/notifications",
-                notificacion
-        );
+        // Enviamos al usuario específico si tiene ID
+        if (notificacion.idUsuario() != null && !notificacion.idUsuario().isBlank()) {
+            messagingTemplate.convertAndSendToUser(
+                    notificacion.idUsuario(),
+                    "/queue/notifications",
+                    notificacion
+            );
+        }
 
-        // También podemos enviar a un topic general
+        // También enviamos a un topic general
         messagingTemplate.convertAndSend("/topic/notifications", notificacion);
     }
 
-
     @Override
     public List<NotificacionDTO> listarNotificacionesPorUsuario(String idUsuario) {
+        if (idUsuario == null || idUsuario.isBlank() || !ObjectId.isValid(idUsuario)) {
+            throw new IllegalArgumentException("ID de usuario inválido");
+        }
+
         List<Notificacion> notificaciones = notificacionRepo.findByIdUsuario(new ObjectId(idUsuario));
+
+        // Usar MapStruct para convertir la lista de entidades a DTOs
         return notificaciones.stream()
                 .map(notificacionMapper::toDTO)
                 .collect(Collectors.toList());
@@ -80,6 +95,10 @@ public class NotificacionServicioImpl implements NotificacionServicio {
 
     @Override
     public void marcarNotificacionComoLeida(String idNotificacion) {
+        if (idNotificacion == null || idNotificacion.isBlank() || !ObjectId.isValid(idNotificacion)) {
+            throw new IllegalArgumentException("ID de notificación inválido");
+        }
+
         Notificacion notificacion = notificacionRepo.findById(new ObjectId(idNotificacion))
                 .orElseThrow(() -> new RuntimeException("Notificación no encontrada"));
 
@@ -89,9 +108,14 @@ public class NotificacionServicioImpl implements NotificacionServicio {
 
     @Override
     public List<NotificacionDTO> listarNotificacionesNoLeidas(String idUsuario) {
+        if (idUsuario == null || idUsuario.isBlank() || !ObjectId.isValid(idUsuario)) {
+            throw new IllegalArgumentException("ID de usuario inválido");
+        }
+
         List<Notificacion> notificaciones = notificacionRepo.findByIdUsuarioAndLeida(
                 new ObjectId(idUsuario), false);
 
+        // Usar MapStruct para convertir la lista de entidades a DTOs
         return notificaciones.stream()
                 .map(notificacionMapper::toDTO)
                 .collect(Collectors.toList());

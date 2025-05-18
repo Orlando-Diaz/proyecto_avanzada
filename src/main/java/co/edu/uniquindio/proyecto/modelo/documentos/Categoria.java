@@ -1,3 +1,5 @@
+// Modelo Categoria corregido
+
 package co.edu.uniquindio.proyecto.modelo.documentos;
 
 import jakarta.validation.constraints.NotBlank;
@@ -7,10 +9,12 @@ import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document("categoria")
+@Document("categoria") // Mantiene el nombre de la colección tal como está
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Categoria {
     @Id
     private ObjectId id;
@@ -19,9 +23,11 @@ public class Categoria {
     @Size(min = 3, max = 50)
     private String nombre;
 
-    @Builder
-    public Categoria(String nombre, ObjectId id) {
-        this.nombre = nombre;
-        this.id = id; // Genera el ID como String
+    // Método de ayuda para crear una nueva categoría con ID generado
+    public static Categoria crearNueva(String nombre) {
+        return Categoria.builder()
+                .id(new ObjectId())
+                .nombre(nombre)
+                .build();
     }
 }

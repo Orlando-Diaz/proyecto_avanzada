@@ -1,6 +1,5 @@
 package co.edu.uniquindio.proyecto.mapper;
 
-
 import co.edu.uniquindio.proyecto.dto.NotificacionDTO;
 import co.edu.uniquindio.proyecto.modelo.documentos.Notificacion;
 import org.bson.types.ObjectId;
@@ -28,6 +27,14 @@ public interface NotificacionMapper {
 
     @Named("stringToObjectId")
     default ObjectId stringToObjectId(String id) {
-        return id != null ? new ObjectId(id) : null;
+        if (id == null || id.isBlank()) {
+            return null;
+        }
+        try {
+            return new ObjectId(id);
+        } catch (IllegalArgumentException e) {
+            // Log error if needed
+            return null;
+        }
     }
 }

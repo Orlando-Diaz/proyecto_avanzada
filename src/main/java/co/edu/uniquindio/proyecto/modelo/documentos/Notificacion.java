@@ -1,38 +1,36 @@
 package co.edu.uniquindio.proyecto.modelo.documentos;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
-@Getter
-@Setter
+@Document("notificaciones")
+@Data
 @NoArgsConstructor
-@Document("notificacion")
+@AllArgsConstructor
+@Builder
 public class Notificacion {
 
     @Id
-    @EqualsAndHashCode.Include
     private ObjectId id;
 
     private String mensaje;
-    private LocalDateTime fecha;
-    private String tipo;
-    private boolean leida;
-    private ObjectId reporteId;
-    private ObjectId idUsuario;
 
-    @Builder
-    public Notificacion(String mensaje, LocalDateTime fecha, String tipo, ObjectId id
-            , ObjectId reporteId, ObjectId idUsuario) {
-        this.mensaje = mensaje;
-        this.fecha = fecha;
-        this.tipo = tipo;
-        this.id = id;
-        this.reporteId = reporteId;
-        this.idUsuario = idUsuario;
-        this.leida = false;
-    }
+    private LocalDateTime fecha;
+
+    private String tipo; // Puede ser "INFO", "WARNING", "ERROR", etc.
+
+    private boolean leida;
+
+    private ObjectId reporteId; // ID del reporte asociado a la notificación
+
+    private ObjectId idUsuario; // ID del usuario que debe recibir la notificación
+
+    private String titulo; // Título de la notificación
 }

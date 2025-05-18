@@ -1,3 +1,5 @@
+// Actualización completa del SecurityConfig con endpoints de notificaciones
+
 package co.edu.uniquindio.proyecto.seguridad;
 
 import lombok.RequiredArgsConstructor;
@@ -37,10 +39,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(req -> req
                         // Endpoints PÚBLICOS (sin autenticación)
                         .requestMatchers(
-                                "/api/auth/**",  // ¡ESTA LÍNEA ES CLAVE! Incluye /api/auth/login
+                                "/api/auth/**",
                                 "/api/usuarios/{email}/verificarCodigoActivacionUsuario",
-                                "/api/usuarios/recuperarContrasenia",  // Nuevo endpoint público
-                                "/api/usuarios/cambiarContrasenia",     // Nuevo endpoint público
+                                "/api/usuarios/recuperarContrasenia",
+                                "/api/usuarios/cambiarContrasenia",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
@@ -48,16 +50,33 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 "/v3/api-docs",
                                 "/v3/api-docs/swagger-config",
-                                "/swagger-ui/index.html"
+                                "/swagger-ui/index.html",
+                                "/ws/**" // WebSocket endpoints
                         ).permitAll()
 
                         // Registro de usuarios (público)
                         .requestMatchers(HttpMethod.POST, "/api/usuarios").permitAll()
 
+                        // CONFIGURACIÓN PARA CATEGORÍAS
+                        .requestMatchers(HttpMethod.GET, "/api/categorias").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/categorias/{id}").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/categorias").hasAuthority("ROLE_ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/categorias/{id}").hasAuthority("ROLE_ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/categorias/{id}").hasAuthority("ROLE_ADMINISTRADOR")
+
+                        // Endpoints de Notificaciones
+                        .requestMatchers(HttpMethod.GET, "/api/notificaciones").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/notificaciones/no-leidas").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/notificaciones/{id}/leer").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/notificaciones").hasAuthority("ROLE_ADMINISTRADOR")
+
+                        // WebSocket
+                        .requestMatchers("/ws/**").permitAll()
+
                         // Endpoints de administración
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMINISTRADOR")
 
-                        // Endpoints de clientes - ACTUALIZADO
+                        // Endpoints de clientes
                         .requestMatchers("/api/clientes/**").hasAuthority("ROLE_CLIENTE")
 
                         // Endpoints específicos del cliente para su perfil
@@ -67,16 +86,21 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/clientes/cambiar-password").hasAuthority("ROLE_CLIENTE")
 
                         // Endpoints de usuarios (administración)
-                        .requestMatchers(HttpMethod.PUT, "/api/usuarios/**").hasAuthority("ROLE_ADMINISTRADOR")
-                        .requestMatchers(HttpMethod.GET, "/api/usuarios/**").hasAuthority("ROLE_ADMINISTRADOR")
-                        .requestMatchers(HttpMethod.DELETE, "/api/usuarios/**").hasAuthority("ROLE_ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/usuarios/{id}").hasAuthority("ROLE_ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.GET, "/api/usuarios/{id}").hasAuthority("ROLE_ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/usuarios/{id}").hasAuthority("ROLE_ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.GET, "/api/usuarios").hasAuthority("ROLE_ADMINISTRADOR")
 
                         // Permisos para reportes
                         .requestMatchers(HttpMethod.POST, "/api/reportes").hasAnyAuthority("ROLE_CLIENTE", "ROLE_ADMINISTRADOR")
-                        .requestMatchers(HttpMethod.PUT, "/api/reportes/**").hasAnyAuthority("ROLE_CLIENTE", "ROLE_ADMINISTRADOR")
-                        .requestMatchers(HttpMethod.DELETE, "/api/reportes/**").hasAnyAuthority("ROLE_CLIENTE", "ROLE_ADMINISTRADOR")
-                        .requestMatchers(HttpMethod.GET, "/api/reportes/**").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/reportes/**/rechazar").hasAuthority("ROLE_ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/reportes/{id}").hasAnyAuthority("ROLE_CLIENTE", "ROLE_ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/reportes/{id}").hasAnyAuthority("ROLE_CLIENTE", "ROLE_ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.GET, "/api/reportes").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/reportes/{id}").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/reportes/mis-reportes").hasAuthority("ROLE_CLIENTE")
+                        .requestMatchers(HttpMethod.PUT, "/api/reportes/{id}/rechazar").hasAuthority("ROLE_ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.POST, "/api/reportes/gestionar-estado-reporte-admin").hasAuthority("ROLE_ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.POST, "/api/reportes/cliente/gestionar-estado-reporte-usuario").hasAuthority("ROLE_CLIENTE")
 
                         // Todos los demás endpoints requieren autenticación
                         .anyRequest().authenticated()
@@ -94,7 +118,7 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of("*"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
-        config.setExposedHeaders(List.of("Authorization")); // Importante para JWT
+        config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

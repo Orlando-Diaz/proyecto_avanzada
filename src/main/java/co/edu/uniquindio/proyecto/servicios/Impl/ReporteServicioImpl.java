@@ -13,6 +13,7 @@ import co.edu.uniquindio.proyecto.repositorios.ReporteRepo;
 import co.edu.uniquindio.proyecto.repositorios.UsuarioRepo;
 import co.edu.uniquindio.proyecto.seguridad.JWTUtils;
 import co.edu.uniquindio.proyecto.servicios.interfaces.EmailServicio;
+import co.edu.uniquindio.proyecto.servicios.interfaces.NotificacionServicio;
 import co.edu.uniquindio.proyecto.servicios.interfaces.ReporteServicio;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
@@ -45,6 +46,7 @@ public class ReporteServicioImpl implements ReporteServicio {
     private final EmailServicio emailServicio;
     private final JWTUtils jwtUtils;
     private final CategoriaRepo categoriaRepo;
+    private final NotificacionServicio notificacionServicio;
 
     @Override
     public void crearReporte(CrearReporteDTO crearReporteDTO) throws Exception {
@@ -590,9 +592,7 @@ public class ReporteServicioImpl implements ReporteServicio {
      */
     @Override
     public void gestionarEstadoReporteAdministrador(GestionarEstadoReporteDTO gestionEstadoReporteDTO) throws Exception {
-
-        //Validar role usuario
-        // obtener usuario
+        // Validar role usuario
         Usuario usuario = usuarioRepo.findById(new ObjectId(gestionEstadoReporteDTO.idUsuarioModifica()))
                 .orElseThrow(() -> new Exception("Usuario no encontrado"));
         System.out.println("ROL DEL USUARIO: '" + usuario.getRol() + "'");
@@ -644,6 +644,48 @@ public class ReporteServicioImpl implements ReporteServicio {
         reporteRepo.save(reporte);
         historialReporteRepo.save(historial);
 
+        // NUEVO CÓDIGO: Enviar notificación por correo al dueño del reporte
+        try {
+            // Obtener el dueño del reporte
+            Usuario duenoReporte = usuarioRepo.findById(reporte.getIdUsuario())
+                    .orElseThrow(() -> new Exception("No se encontró el dueño del reporte"));
+
+            // Construir el asunto y cuerpo del correo
+            String asunto = "Estado de tu reporte actualizado: " + reporte.getTitulo();
+            String cuerpo = "Hola " + duenoReporte.getNombre() + ",\n\n" +
+                    "Tu reporte \"" + reporte.getTitulo() + "\" ha sido actualizado.\n\n" +
+                    "Estado anterior: " + cambios.get("estadoAnterior") + "\n" +
+                    "Nuevo estado: " + cambios.get("estadoNuevo") + "\n\n" +
+                    "Motivo: " + gestionEstadoReporteDTO.motivo() + "\n\n" +
+                    "Gracias por usar nuestro sistema de reportes.";
+
+            // Enviar correo
+            emailServicio.enviarCorreo(new EnviarCorreoDTO(
+                    duenoReporte.getEmail(),
+                    asunto,
+                    cuerpo
+            ));
+
+            // NUEVO CÓDIGO: Crear notificación en la plataforma
+            NotificacionDTO notificacionDTO = new NotificacionDTO(
+                    null,
+                    "Tu reporte \"" + reporte.getTitulo() + "\" ha sido actualizado a estado " + nuevoEstado,
+                    LocalDateTime.now(),
+                    "ESTADO_REPORTE",
+                    false,
+                    reporte.getId().toString(),
+                    duenoReporte.getId().toString(),
+                    "Estado de reporte actualizado"
+            );
+
+            // Crear la notificación en base de datos y enviar por WebSocket
+            notificacionServicio.crearNotificacion(notificacionDTO);
+
+        } catch (Exception e) {
+            // Registramos el error pero no interrumpimos el flujo principal
+            System.err.println("Error al enviar notificación: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -654,7 +696,6 @@ public class ReporteServicioImpl implements ReporteServicio {
      */
     @Override
     public void gestionarEstadoReporteCliente(GestionarEstadoReporteDTO gestionEstadoReporteDTO) throws Exception {
-
         Usuario usuario = usuarioRepo.findById(new ObjectId(gestionEstadoReporteDTO.idUsuarioModifica()))
                 .orElseThrow(() -> new Exception("Usuario no encontrado"));
 
@@ -705,6 +746,48 @@ public class ReporteServicioImpl implements ReporteServicio {
 
         reporteRepo.save(reporte);
 
+        // NUEVO CÓDIGO: Enviar notificaciones a administradores
+        try {
+            // Encontrar todos los administradores
+            List<Usuario> administradores = usuarioRepo.findByRol(Rol.ADMINISTRADOR);
+
+            // Enviar correo a cada administrador
+            for (Usuario admin : administradores) {
+                // Construir el asunto y cuerpo del correo
+                String asunto = "Reporte actualizado por el cliente: " + reporte.getTitulo();
+                String cuerpo = "Hola " + admin.getNombre() + ",\n\n" +
+                        "El usuario " + usuario.getNombre() + " ha actualizado el estado de su reporte \"" + reporte.getTitulo() + "\".\n\n" +
+                        "Estado anterior: " + cambios.get("estadoAnterior") + "\n" +
+                        "Nuevo estado: " + cambios.get("estadoNuevo") + "\n\n" +
+                        "Motivo: " + gestionEstadoReporteDTO.motivo() + "\n\n" +
+                        "Por favor revisa el sistema para más detalles.";
+
+                // Enviar correo
+                emailServicio.enviarCorreo(new EnviarCorreoDTO(
+                        admin.getEmail(),
+                        asunto,
+                        cuerpo
+                ));
+
+                NotificacionDTO notificacionDTO = new NotificacionDTO(
+                        null,
+                        "El usuario " + usuario.getNombre() + " ha actualizado su reporte \"" + reporte.getTitulo() + "\" a estado " + nuevoEstado,
+                        LocalDateTime.now(),
+                        "ESTADO_REPORTE_CLIENTE",
+                        false,
+                        reporte.getId().toString(),
+                        admin.getId().toString(),  // Usar el ID del administrador
+                        "Reporte actualizado por cliente"
+                );
+
+                // Crear la notificación en base de datos y enviar por WebSocket
+                notificacionServicio.crearNotificacion(notificacionDTO);
+            }
+        } catch (Exception e) {
+            // Registramos el error pero no interrumpimos el flujo principal
+            System.err.println("Error al enviar notificaciones a administradores: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -1090,13 +1173,20 @@ public class ReporteServicioImpl implements ReporteServicio {
             throw new Exception("Solo se pueden rechazar reportes en estado PENDIENTE");
         }
 
-        // Obtener ID del usuario que rechaza
-        String idUsuario = SecurityContextHolder.getContext().getAuthentication().getName();
+        // Obtener email del usuario que rechaza
+        String emailAdmin = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        // Obtener el administrador que rechaza (para su nombre)
+        Usuario admin = usuarioRepo.findByEmail(emailAdmin)
+                .orElse(null); // Podría ser null si no se encuentra, pero debería existir
+
+        String nombreAdmin = (admin != null) ? admin.getNombre() : "Un administrador";
 
         // Crear entrada en el historial
         Map<String, String> cambios = new HashMap<>();
         cambios.put("estado", "De PENDIENTE a RECHAZADO");
         cambios.put("justificacion", dto.justificacion());
+        cambios.put("administrador", emailAdmin);
 
         HistorialReporte historial = new HistorialReporte(
                 "Reporte rechazado: " + dto.justificacion(),
@@ -1113,6 +1203,52 @@ public class ReporteServicioImpl implements ReporteServicio {
         reporte.getHistorial().add(historial);
 
         reporteRepo.save(reporte);
+
+        // NUEVO CÓDIGO: Enviar notificación al creador del reporte
+        try {
+            // Solo enviar notificación si el reporte tiene un usuario asociado (no es anónimo)
+            if (reporte.getIdUsuario() != null) {
+                // Obtener el usuario creador del reporte
+                Usuario usuarioCreador = usuarioRepo.findById(reporte.getIdUsuario())
+                        .orElse(null);
+
+                if (usuarioCreador != null) {
+                    // Construir el asunto y cuerpo del correo
+                    String asunto = "Tu reporte ha sido rechazado: " + reporte.getTitulo();
+                    String cuerpo = "Hola " + usuarioCreador.getNombre() + ",\n\n" +
+                            "Tu reporte \"" + reporte.getTitulo() + "\" ha sido rechazado.\n\n" +
+                            "Justificación: " + dto.justificacion() + "\n\n" +
+                            "Si tienes alguna pregunta, por favor contacta con el administrador.\n\n" +
+                            "Gracias por usar nuestro sistema de reportes.";
+
+                    // Enviar correo
+                    emailServicio.enviarCorreo(new EnviarCorreoDTO(
+                            usuarioCreador.getEmail(),
+                            asunto,
+                            cuerpo
+                    ));
+
+                    // Crear notificación en la plataforma
+                    NotificacionDTO notificacionDTO = new NotificacionDTO(
+                            null,
+                            "Tu reporte \"" + reporte.getTitulo() + "\" ha sido rechazado. Motivo: " + dto.justificacion(),
+                            LocalDateTime.now(),
+                            "REPORTE_RECHAZADO",
+                            false,
+                            reporte.getId().toString(),
+                            usuarioCreador.getId().toString(),
+                            "Reporte rechazado"
+                    );
+
+                    // Crear la notificación en base de datos y enviar por WebSocket
+                    notificacionServicio.crearNotificacion(notificacionDTO);
+                }
+            }
+        } catch (Exception e) {
+            // Registramos el error pero no interrumpimos el flujo principal
+            System.err.println("Error al enviar notificación de rechazo: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     @Override
