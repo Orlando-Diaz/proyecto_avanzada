@@ -1,7 +1,5 @@
-package co.edu.uniquindio.proyecto.config;
+package co.edu.uniquindio.proyecto.seguridad;
 
-import co.edu.uniquindio.proyecto.seguridad.AutenticacionEntryPoint;
-import co.edu.uniquindio.proyecto.seguridad.JWTFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,6 +39,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/**",  // ¡ESTA LÍNEA ES CLAVE! Incluye /api/auth/login
                                 "/api/usuarios/{email}/verificarCodigoActivacionUsuario",
+                                "/api/usuarios/recuperarContrasenia",  // Nuevo endpoint público
+                                "/api/usuarios/cambiarContrasenia",     // Nuevo endpoint público
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**",
@@ -57,19 +57,26 @@ public class SecurityConfig {
                         // Endpoints de administración
                         .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMINISTRADOR")
 
-                        // Endpoints de clientes
-                        .requestMatchers("/api/clientes/**").hasAnyAuthority("ROLE_CLIENTE", "ROLE_ADMINISTRADOR")
+                        // Endpoints de clientes - ACTUALIZADO
+                        .requestMatchers("/api/clientes/**").hasAuthority("ROLE_CLIENTE")
 
-                        // Endpoints de usuarios
-                        .requestMatchers(HttpMethod.PUT, "/api/usuarios/**").hasAnyAuthority("ROLE_ADMINISTRADOR", "ROLE_CLIENTE")
-                        .requestMatchers(HttpMethod.GET, "/api/usuarios/**").authenticated()
+                        // Endpoints específicos del cliente para su perfil
+                        .requestMatchers(HttpMethod.GET, "/api/clientes/perfil").hasAuthority("ROLE_CLIENTE")
+                        .requestMatchers(HttpMethod.PUT, "/api/clientes/perfil").hasAuthority("ROLE_CLIENTE")
+                        .requestMatchers(HttpMethod.DELETE, "/api/clientes/cuenta").hasAuthority("ROLE_CLIENTE")
+                        .requestMatchers(HttpMethod.PUT, "/api/clientes/cambiar-password").hasAuthority("ROLE_CLIENTE")
+
+                        // Endpoints de usuarios (administración)
+                        .requestMatchers(HttpMethod.PUT, "/api/usuarios/**").hasAuthority("ROLE_ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.GET, "/api/usuarios/**").hasAuthority("ROLE_ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/usuarios/**").hasAuthority("ROLE_ADMINISTRADOR")
 
                         // Permisos para reportes
                         .requestMatchers(HttpMethod.POST, "/api/reportes").hasAnyAuthority("ROLE_CLIENTE", "ROLE_ADMINISTRADOR")
                         .requestMatchers(HttpMethod.PUT, "/api/reportes/**").hasAnyAuthority("ROLE_CLIENTE", "ROLE_ADMINISTRADOR")
-                        .requestMatchers(HttpMethod.DELETE, "/api/reportes/**").hasAuthority("ROLE_ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/reportes/**").hasAnyAuthority("ROLE_CLIENTE", "ROLE_ADMINISTRADOR")
                         .requestMatchers(HttpMethod.GET, "/api/reportes/**").authenticated()
-                        .requestMatchers(HttpMethod.PUT, "/api/reportes/**/rechazar").hasAnyAuthority("ROLE_ADMINISTRADOR")
+                        .requestMatchers(HttpMethod.PUT, "/api/reportes/**/rechazar").hasAuthority("ROLE_ADMINISTRADOR")
 
                         // Todos los demás endpoints requieren autenticación
                         .anyRequest().authenticated()

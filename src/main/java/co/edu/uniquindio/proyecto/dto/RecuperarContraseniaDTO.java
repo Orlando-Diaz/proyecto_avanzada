@@ -8,6 +8,8 @@ import jakarta.validation.constraints.NotBlank;
  * @param email
  */
 public record RecuperarContraseniaDTO(
-        @Schema(description = "Email del usuario", example = "usuario@email.com", requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(description = "Email del usuario",
+                example = "usuario@email.com",
+                requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank String email) {
 }

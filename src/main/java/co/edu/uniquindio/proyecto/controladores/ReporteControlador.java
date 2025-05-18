@@ -4,8 +4,11 @@ import co.edu.uniquindio.proyecto.dto.*;
 import co.edu.uniquindio.proyecto.excepciones.EstadoReporteInvalidoException;
 import co.edu.uniquindio.proyecto.modelo.documentos.HistorialReporte;
 import co.edu.uniquindio.proyecto.modelo.documentos.Reporte;
+import org.springframework.security.core.Authentication;
 import co.edu.uniquindio.proyecto.repositorios.ReporteRepo;
 import co.edu.uniquindio.proyecto.servicios.interfaces.ReporteServicio;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.access.AccessDeniedException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -49,36 +52,103 @@ public class ReporteControlador {
     @Operation(summary = "Editar un reporte")
     @PutMapping("/{id}")
     public ResponseEntity<MensajeDTO<String>> editarReporte(
-            @Parameter(
-                    name = "id",
-                    description = "ID único del reporte a editar",
-                    required = true,
-                    example = "64a7f8e0b27c1234567890ab"
-            )
+            @Parameter(name = "id", description = "ID único del reporte a editar", required = true)
             @PathVariable(name = "id") String id,
-            @Parameter(
-                    name = "editarReporteDTO",
-                    description = "Datos actualizados del reporte",
-                    required = true
-            )
             @Valid @RequestBody(required = true) EditarReporteDTO editarReporteDTO
-    ) throws Exception {
-        reporteServicio.editarReporte(id, editarReporteDTO); // Enviar ID y DTO
-        return ResponseEntity.ok().body(new MensajeDTO<>(false, "Reporte actualizado exitosamente"));
+    ) {
+        try {
+            // Obtener el email del usuario desde el contexto de seguridad
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String emailUsuario = authentication.getName(); // Esto ahora es el email del usuario
+
+            System.out.println("Editando reporte: " + id);
+            System.out.println("Email del usuario autenticado: " + emailUsuario);
+            System.out.println("Roles: " + authentication.getAuthorities());
+
+            // Verificar si el usuario es el propietario del reporte o un administrador
+            boolean esPropietario = reporteServicio.verificarPropietarioReporte(id, emailUsuario);
+            boolean esAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR"));
+
+            System.out.println("¿Es propietario? " + esPropietario);
+            System.out.println("¿Es admin? " + esAdmin);
+
+            if (!esPropietario && !esAdmin) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new MensajeDTO<>(true, "No tienes permisos para editar este reporte"));
+            }
+
+            reporteServicio.editarReporte(id, editarReporteDTO);
+            return ResponseEntity.ok().body(new MensajeDTO<>(false, "Reporte actualizado exitosamente"));
+        } catch (Exception e) {
+            System.out.println("Error al editar reporte: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new MensajeDTO<>(true, "Error al editar reporte: " + e.getMessage()));
+        }
+    }
+
+    @Operation(summary = "Listar reportes del usuario actual")
+    @GetMapping("/mis-reportes")
+    public ResponseEntity<MensajeDTO<Object>> listarMisReportes() {
+        try {
+            // Obtener el email del usuario desde el contexto de seguridad
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String emailUsuario = authentication.getName(); // Esto ahora es el email del usuario
+
+            System.out.println("Listando reportes para el usuario con email: " + emailUsuario);
+
+            List<ReporteDTO> reportes = reporteServicio.listarReportesPorEmailUsuario(emailUsuario);
+            System.out.println("Reportes encontrados: " + reportes.size());
+
+            // Usando Object como tipo genérico nos permite devolver tanto List<ReporteDTO> como String
+            return ResponseEntity.ok().body(new MensajeDTO<>(false, reportes));
+        } catch (Exception e) {
+            System.out.println("Error al listar reportes del usuario: " + e.getMessage());
+            e.printStackTrace();
+
+            // Ahora podemos devolver un mensaje de error como String
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MensajeDTO<>(true, "Error al listar reportes: " + e.getMessage()));
+        }
     }
 
     @Operation(summary = "Eliminar un reporte")
     @DeleteMapping("/{id}")
     public ResponseEntity<MensajeDTO<String>> eliminarReporte(
-            @Parameter(
-                    name = "id",
-                    description = "ID único del reporte a eliminar",
-                    required = true,
-                    example = "64a7f8e0b27c1234567890ab"
-            )
-            @PathVariable(name = "id") String id) throws Exception {
-        reporteServicio.eliminarReporte(id);
-        return ResponseEntity.ok().body(new MensajeDTO<>(false, "Reporte eliminado exitosamente"));
+            @Parameter(name = "id", description = "ID único del reporte a eliminar", required = true)
+            @PathVariable(name = "id") String id
+    ) {
+        try {
+            // Obtener el email del usuario desde el contexto de seguridad
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String emailUsuario = authentication.getName(); // Email del usuario actual
+
+            System.out.println("Eliminando reporte: " + id);
+            System.out.println("Email del usuario autenticado: " + emailUsuario);
+            System.out.println("Roles: " + authentication.getAuthorities());
+
+            // Verificar si el usuario es el propietario del reporte o un administrador
+            boolean esPropietario = reporteServicio.verificarPropietarioReporte(id, emailUsuario);
+            boolean esAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR"));
+
+            System.out.println("¿Es propietario? " + esPropietario);
+            System.out.println("¿Es admin? " + esAdmin);
+
+            if (!esPropietario && !esAdmin) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(new MensajeDTO<>(true, "No tienes permisos para eliminar este reporte"));
+            }
+
+            reporteServicio.eliminarReporte(id);
+            return ResponseEntity.ok().body(new MensajeDTO<>(false, "Reporte eliminado exitosamente"));
+        } catch (Exception e) {
+            System.out.println("Error al eliminar reporte: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new MensajeDTO<>(true, "Error al eliminar reporte: " + e.getMessage()));
+        }
     }
 
     @Operation(summary = "Obtener reporte por ID")

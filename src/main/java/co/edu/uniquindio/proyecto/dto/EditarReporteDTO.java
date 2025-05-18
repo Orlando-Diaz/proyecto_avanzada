@@ -10,9 +10,10 @@ import org.hibernate.validator.constraints.Length;
 import java.util.List;
 
 public record EditarReporteDTO(
-        @NotBlank @Length(max = 150) String titulo,
-        @NotBlank @Length(max = 400) String descripcion,
-        @NotEmpty List<String> fotos,
-        @NotBlank ObjectId categoria,
-        @NotNull UbicacionDTO ubicacion
-) {}
+        String titulo,
+        String descripcion,
+        List<String> fotos,
+        String idCategoria,
+        UbicacionDTO ubicacion
+) {
+}

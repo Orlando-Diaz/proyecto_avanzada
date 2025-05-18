@@ -5,7 +5,6 @@ import co.edu.uniquindio.proyecto.excepciones.EstadoReporteInvalidoException;
 import co.edu.uniquindio.proyecto.excepciones.RoleInvalidoException;
 import co.edu.uniquindio.proyecto.mapper.ReporteMapper;
 import co.edu.uniquindio.proyecto.modelo.documentos.*;
-import co.edu.uniquindio.proyecto.modelo.enums.Ciudad;
 import co.edu.uniquindio.proyecto.modelo.enums.EstadoReporte;
 import co.edu.uniquindio.proyecto.modelo.enums.Rol;
 import co.edu.uniquindio.proyecto.repositorios.CategoriaRepo;
@@ -18,15 +17,12 @@ import co.edu.uniquindio.proyecto.servicios.interfaces.ReporteServicio;
 import lombok.RequiredArgsConstructor;
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import com.itextpdf.text.*;
-import com.itextpdf.text.pdf.*;
+
 import java.io.ByteArrayOutputStream;
 
 import java.time.LocalDate;
@@ -35,6 +31,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -93,27 +90,77 @@ public class ReporteServicioImpl implements ReporteServicio {
 
     @Override
     public void editarReporte(String id, EditarReporteDTO editarReporteDTO) throws Exception {
-        // 1. Obtener reporte actual
-        Reporte reporte = obtenerReporte(id);
+        // 1. Validar ID y obtener reporte actual
+        if (!ObjectId.isValid(id)) {
+            throw new Exception("ID de reporte inválido");
+        }
 
-        // 2. Obtener ID del cliente desde el token JWT (¡Aquí va!)
-        String clienteId = SecurityContextHolder.getContext()
+        ObjectId reporteId = new ObjectId(id);
+        Reporte reporte = reporteRepo.findById(reporteId)
+                .orElseThrow(() -> new Exception("Reporte no encontrado"));
+
+        // 2. Obtener email del cliente desde el token JWT
+        String clienteEmail = SecurityContextHolder.getContext()
                 .getAuthentication()
-                .getName(); // Asume que el username es el ID
+                .getName(); // Ahora es el email
 
-        // 3. Preparar cambios (tu lógica actual)
+        // Buscar el cliente por su email para obtener su ID
+        Usuario cliente = usuarioRepo.findByEmail(clienteEmail)
+                .orElseThrow(() -> new Exception("Usuario no encontrado con email: " + clienteEmail));
+        ObjectId clienteId = cliente.getId();
+
+        // 3. Preparar cambios
         Map<String, String> cambios = new HashMap<>();
-        if (editarReporteDTO.titulo() != null && !editarReporteDTO.titulo().equals(reporte.getTitulo())) {
+
+        // Actualizar título si no es nulo y es diferente
+        if (editarReporteDTO.titulo() != null && !editarReporteDTO.titulo().isBlank() &&
+                !editarReporteDTO.titulo().equals(reporte.getTitulo())) {
             cambios.put("titulo", reporte.getTitulo() + " → " + editarReporteDTO.titulo());
             reporte.setTitulo(editarReporteDTO.titulo());
         }
-        // ... otros campos ...
 
-        // 4. Registrar en historial
+        // Actualizar descripción si no es nulo y es diferente
+        if (editarReporteDTO.descripcion() != null && !editarReporteDTO.descripcion().isBlank() &&
+                !editarReporteDTO.descripcion().equals(reporte.getDescripcion())) {
+            cambios.put("descripcion", "Descripción modificada");
+            reporte.setDescripcion(editarReporteDTO.descripcion());
+        }
+
+        // Actualizar fotos si no es nulo
+        if (editarReporteDTO.fotos() != null) {
+            cambios.put("fotos", "Fotos actualizadas");
+            reporte.setFotos(editarReporteDTO.fotos());
+        }
+
+        // Actualizar categoría si no es nulo y es válido
+        if (editarReporteDTO.idCategoria() != null && !editarReporteDTO.idCategoria().isBlank() &&
+                ObjectId.isValid(editarReporteDTO.idCategoria())) {
+            ObjectId categoriaId = new ObjectId(editarReporteDTO.idCategoria());
+            Optional<Categoria> categoria = categoriaRepo.findById(categoriaId);
+
+            if (categoria.isPresent()) {
+                cambios.put("categoria", "Categoría actualizada");
+                reporte.setCategoria(categoriaId);
+            }
+        }
+
+        // Actualizar ubicación si no es nulo
+        if (editarReporteDTO.ubicacion() != null) {
+            if (reporte.getUbicacion() == null) {
+                reporte.setUbicacion(new Ubicacion());
+            }
+
+            UbicacionDTO ubicacionDTO = editarReporteDTO.ubicacion();
+            reporte.getUbicacion().setLatitud(ubicacionDTO.latitud());
+            reporte.getUbicacion().setLongitud(ubicacionDTO.longitud());
+            cambios.put("ubicacion", "Ubicación actualizada");
+        }
+
+        // 4. Registrar en historial si hay cambios
         if (!cambios.isEmpty()) {
             HistorialReporte historial = new HistorialReporte();
-            historial.setClienteId(new ObjectId(clienteId)); // Usar el ID del token
-            historial.setObservaciones("Edición manual");
+            historial.setClienteId(clienteId); // Usar el ID obtenido del email
+            historial.setObservaciones("Edición manual por " + clienteEmail);
             historial.setEstado(reporte.getEstadoActual());
             historial.setFecha(LocalDateTime.now());
             historial.setCambios(cambios);
@@ -122,10 +169,10 @@ public class ReporteServicioImpl implements ReporteServicio {
                 reporte.setHistorial(new ArrayList<>());
             }
             reporte.getHistorial().add(historial);
-        }
 
-        // 5. Guardar
-        reporteRepo.save(reporte);
+            // 5. Guardar
+            reporteRepo.save(reporte);
+        }
     }
 
     private Reporte cloneReporte(Reporte original) {
@@ -175,17 +222,32 @@ public class ReporteServicioImpl implements ReporteServicio {
         // Cambiar el estado
         reporte.setEstadoActual(EstadoReporte.ELIMINADO);
 
+        // Obtener información del usuario que está eliminando
+        String emailUsuario = SecurityContextHolder.getContext().getAuthentication().getName();
+        boolean esAdmin = SecurityContextHolder.getContext().getAuthentication().getAuthorities()
+                .stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMINISTRADOR"));
+
         // Preparar detalles de cambios para el historial
         Map<String, String> cambios = new HashMap<>();
         cambios.put("estado", "De " + estadoAnterior + " a ELIMINADO");
+        cambios.put("eliminadoPor", emailUsuario);
+        cambios.put("tipoUsuario", esAdmin ? "ADMINISTRADOR" : "CLIENTE");
+
+        // Buscar el usuario por su email para obtener su ID
+        Usuario usuario = usuarioRepo.findByEmail(emailUsuario)
+                .orElse(null);
+        ObjectId usuarioId = usuario != null ? usuario.getId() : null;
 
         // Registrar en historial con más detalles
-        HistorialReporte entradaHistorial = new HistorialReporte(
-                "Reporte eliminado del sistema",
-                EstadoReporte.ELIMINADO,
-                LocalDateTime.now(),
-                cambios
-        );
+        HistorialReporte entradaHistorial = new HistorialReporte();
+        entradaHistorial.setObservaciones("Reporte eliminado " + (esAdmin ? "por un administrador" : "por su creador"));
+        entradaHistorial.setEstado(EstadoReporte.ELIMINADO);
+        entradaHistorial.setFecha(LocalDateTime.now());
+        entradaHistorial.setCambios(cambios);
+
+        if (usuarioId != null) {
+            entradaHistorial.setClienteId(usuarioId);
+        }
 
         // Asegurarse que la lista de historial existe
         if (reporte.getHistorial() == null) {
@@ -195,6 +257,7 @@ public class ReporteServicioImpl implements ReporteServicio {
         reporte.getHistorial().add(entradaHistorial);
         reporteRepo.save(reporte);
     }
+
 
     @Override
     public ReporteDTO obtenerReportes(String id) throws Exception {
@@ -212,6 +275,26 @@ public class ReporteServicioImpl implements ReporteServicio {
         return reporteMapper.toDto(optionalReporte.get());
     }
 
+    /**
+     * Lista todos los reportes creados por un usuario específico
+     * @param idUsuario ID del usuario del que se listarán los reportes
+     * @return Lista de ReporteDTO con los reportes del usuario
+     * @throws Exception si ocurre algún error
+     */
+    @Override
+    public List<ReporteDTO> listarReportesPorUsuario(String idUsuario) throws Exception {
+        if (!ObjectId.isValid(idUsuario)) {
+            throw new Exception("ID de usuario inválido");
+        }
+
+        ObjectId usuarioObjectId = new ObjectId(idUsuario);
+        List<Reporte> reportes = reporteRepo.findByIdUsuario(usuarioObjectId);
+
+        return reportes.stream()
+                .map(reporteMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
     @Override
     public List<ReporteDTO> listarTodos() {
         return reporteRepo.findAll().stream()
@@ -221,25 +304,164 @@ public class ReporteServicioImpl implements ReporteServicio {
 
     @Override
     public List<ReporteDTO> listarTodos(String nombre, String ciudad, String categoria) {
-        Criteria criteria = new Criteria();
+        System.out.println("Buscando reportes con filtros - nombre: " + nombre + ", ciudad: " + ciudad + ", categoria: " + categoria);
+
+        // En lugar de usar una consulta geoespacial, vamos a obtener todos los reportes
+        // que coincidan con los otros filtros y luego filtrar por distancia en memoria
+
+        // Construir la consulta para nombre y categoría
+        org.bson.Document queryDoc = new org.bson.Document();
 
         if (nombre != null && !nombre.isBlank()) {
-            criteria.and("titulo").regex(nombre, "i");
-        }
-
-        if (ciudad != null && !ciudad.isBlank()) {
-            criteria.and("ciudad").is(Ciudad.valueOf(ciudad.toUpperCase()));
+            queryDoc.append("titulo", new org.bson.Document("$regex", nombre).append("$options", "i"));
         }
 
         if (categoria != null && !categoria.isBlank()) {
-            criteria.and("categoria").is(categoria);
+            if (ObjectId.isValid(categoria)) {
+                // Si es un ObjectId válido, buscar por el ObjectId
+                System.out.println("Buscando por categoría con ObjectId: " + categoria);
+                queryDoc.append("categoria", new ObjectId(categoria));
+            } else {
+                // Si no es un ObjectId, intentar buscar por el nombre de categoría
+                System.out.println("Buscando por categoría como String: " + categoria);
+                queryDoc.append("categoria", categoria);
+            }
         }
 
-        Query query = new Query(criteria);
+        System.out.println("MongoDB Query inicial: " + queryDoc.toJson());
 
-        return mongoTemplate.find(query, Reporte.class).stream()
+        // Obtener los reportes que coinciden con nombre y categoría
+        List<org.bson.Document> resultadosDB = mongoTemplate.getCollection("reportes")
+                .find(queryDoc)
+                .into(new ArrayList<>());
+
+        System.out.println("Reportes encontrados antes de filtrar por ciudad: " + resultadosDB.size());
+
+        // Si se especificó una ciudad, filtrar por distancia en memoria
+        List<org.bson.Document> resultadosFiltrados = resultadosDB;
+
+        if (ciudad != null && !ciudad.isBlank()) {
+            System.out.println("Filtrando por ciudad: " + ciudad);
+
+            // Obtener coordenadas para la ciudad
+            CoordenadasCiudad coordenadas = obtenerCoordenadasCiudad(ciudad);
+            if (coordenadas != null) {
+                System.out.println("Coordenadas encontradas para " + ciudad + ": " +
+                        coordenadas.latitud + ", " + coordenadas.longitud +
+                        " con radio de " + coordenadas.radioKm + " km");
+
+                // Filtrar los reportes por distancia
+                final double radioKm = coordenadas.radioKm;
+                final double latitudCiudad = coordenadas.latitud;
+                final double longitudCiudad = coordenadas.longitud;
+
+                resultadosFiltrados = resultadosDB.stream()
+                        .filter(doc -> {
+                            try {
+                                // Extraer las coordenadas del reporte
+                                org.bson.Document ubicacionDoc = (org.bson.Document) doc.get("ubicacion");
+                                if (ubicacionDoc != null) {
+                                    Double latitud = ubicacionDoc.getDouble("latitud");
+                                    Double longitud = ubicacionDoc.getDouble("longitud");
+
+                                    if (latitud != null && longitud != null) {
+                                        // Calcular la distancia entre las coordenadas
+                                        double distancia = calcularDistanciaHaversine(
+                                                latitudCiudad, longitudCiudad,
+                                                latitud, longitud
+                                        );
+
+                                        System.out.println("Reporte " + doc.getObjectId("_id") +
+                                                " distancia: " + distancia + " km");
+
+                                        // Conservar reportes dentro del radio de la ciudad
+                                        return distancia <= radioKm;
+                                    }
+                                }
+                                return false;
+                            } catch (Exception e) {
+                                System.out.println("Error al calcular distancia para reporte: " + e.getMessage());
+                                return false;
+                            }
+                        })
+                        .collect(Collectors.toList());
+            } else {
+                System.out.println("Ciudad no reconocida: " + ciudad);
+                // Si no reconocemos la ciudad, devolver lista vacía
+                resultadosFiltrados = new ArrayList<>();
+            }
+        }
+
+        System.out.println("Reportes encontrados después de filtrar por ciudad: " + resultadosFiltrados.size());
+
+        // Convertir los documentos a objetos Reporte y luego a DTOs
+        List<Reporte> reportes = resultadosFiltrados.stream()
+                .map(doc -> mongoTemplate.getConverter().read(Reporte.class, doc))
+                .collect(Collectors.toList());
+
+        return reportes.stream()
                 .map(reporteMapper::toDto)
                 .toList();
+    }
+
+    /**
+     * Clase auxiliar para almacenar coordenadas de ciudades
+     */
+    private static class CoordenadasCiudad {
+        double latitud;
+        double longitud;
+        double radioKm; // Radio aproximado de la ciudad en kilómetros
+
+        public CoordenadasCiudad(double latitud, double longitud, double radioKm) {
+            this.latitud = latitud;
+            this.longitud = longitud;
+            this.radioKm = radioKm;
+        }
+    }
+
+    /**
+     * Método para obtener las coordenadas de una ciudad por su nombre
+     * @param nombreCiudad Nombre de la ciudad
+     * @return Objeto con las coordenadas y radio, o null si no se reconoce la ciudad
+     */
+    private CoordenadasCiudad obtenerCoordenadasCiudad(String nombreCiudad) {
+        // Normalizar el nombre de la ciudad (quitar acentos, convertir a minúsculas)
+        String ciudadNormalizada = nombreCiudad.toLowerCase()
+                .replaceAll("[áàäâã]", "a")
+                .replaceAll("[éèëê]", "e")
+                .replaceAll("[íìïî]", "i")
+                .replaceAll("[óòöôõ]", "o")
+                .replaceAll("[úùüû]", "u");
+
+        // Mapa de ciudades con sus coordenadas (latitud, longitud, radio en km)
+        Map<String, CoordenadasCiudad> coordenadasCiudades = new HashMap<>();
+
+        // Ciudades principales de Colombia
+        coordenadasCiudades.put("armenia", new CoordenadasCiudad(4.5387911, -75.6699968, 5));
+        coordenadasCiudades.put("bogota", new CoordenadasCiudad(4.7110, -74.0721, 15));
+        coordenadasCiudades.put("medellin", new CoordenadasCiudad(6.2442, -75.5812, 10));
+        coordenadasCiudades.put("cali", new CoordenadasCiudad(3.4516, -76.5320, 10));
+        coordenadasCiudades.put("barranquilla", new CoordenadasCiudad(10.9685, -74.7813, 8));
+        coordenadasCiudades.put("cartagena", new CoordenadasCiudad(10.3910, -75.4794, 8));
+        coordenadasCiudades.put("pereira", new CoordenadasCiudad(4.8143, -75.6946, 5));
+        coordenadasCiudades.put("manizales", new CoordenadasCiudad(5.0687, -75.5173, 5));
+        coordenadasCiudades.put("bucaramanga", new CoordenadasCiudad(7.1254, -73.1198, 7));
+        coordenadasCiudades.put("cucuta", new CoordenadasCiudad(7.8939, -72.5078, 6));
+        coordenadasCiudades.put("ibague", new CoordenadasCiudad(4.4389, -75.2322, 5));
+        coordenadasCiudades.put("pasto", new CoordenadasCiudad(1.2136, -77.2811, 4));
+        coordenadasCiudades.put("santa marta", new CoordenadasCiudad(11.2404, -74.1996, 6));
+        coordenadasCiudades.put("villavicencio", new CoordenadasCiudad(4.1533, -73.6351, 5));
+
+        // Intentar encontrar la ciudad en el mapa
+        for (Map.Entry<String, CoordenadasCiudad> entry : coordenadasCiudades.entrySet()) {
+            if (ciudadNormalizada.contains(entry.getKey()) ||
+                    entry.getKey().contains(ciudadNormalizada)) {
+                return entry.getValue();
+            }
+        }
+
+        // Si no se encuentra la ciudad, retornar null
+        return null;
     }
 
     private Reporte obtenerReporte(String idReporte) throws Exception {
@@ -671,44 +893,46 @@ public class ReporteServicioImpl implements ReporteServicio {
         // Crear un ByteArrayOutputStream para almacenar el PDF
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-        // Crear el documento PDF
-        Document document = new Document(PageSize.A4);
-        PdfWriter.getInstance(document, baos);
+        // Crear el documento PDF - Usar el nombre completo para evitar ambigüedad
+        com.itextpdf.text.Document document = new com.itextpdf.text.Document(com.itextpdf.text.PageSize.A4);
+        com.itextpdf.text.pdf.PdfWriter.getInstance(document, baos);
 
         document.open();
 
         // Añadir título
-        Font titleFont = new Font(Font.FontFamily.HELVETICA, 18, Font.BOLD);
-        Paragraph title = new Paragraph("Informe de Reportes por Categoría", titleFont);
-        title.setAlignment(Element.ALIGN_CENTER);
+        com.itextpdf.text.Font titleFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 18, com.itextpdf.text.Font.BOLD);
+        com.itextpdf.text.Paragraph title = new com.itextpdf.text.Paragraph("Informe de Reportes por Categoría", titleFont);
+        title.setAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
         document.add(title);
-        document.add(new Paragraph(" ")); // Espacio
+        document.add(new com.itextpdf.text.Paragraph(" ")); // Espacio
 
         // Añadir información del informe
         if (categoria != null && !categoria.isBlank()) {
-            document.add(new Paragraph("Categoría: " + categoria));
+            document.add(new com.itextpdf.text.Paragraph("Categoría: " + categoria));
         } else {
-            document.add(new Paragraph("Todas las categorías"));
+            document.add(new com.itextpdf.text.Paragraph("Todas las categorías"));
         }
 
         if (fechaInicio != null) {
-            document.add(new Paragraph("Fecha Inicio: " + fechaInicio));
+            document.add(new com.itextpdf.text.Paragraph("Fecha Inicio: " + fechaInicio));
         }
         if (fechaFin != null) {
-            document.add(new Paragraph("Fecha Fin: " + fechaFin));
+            document.add(new com.itextpdf.text.Paragraph("Fecha Fin: " + fechaFin));
         }
-        document.add(new Paragraph("Total de Reportes: " + informe.totalReportes()));
-        document.add(new Paragraph(" ")); // Espacio
+        document.add(new com.itextpdf.text.Paragraph("Total de Reportes: " + informe.totalReportes()));
+        document.add(new com.itextpdf.text.Paragraph(" ")); // Espacio
 
         // Añadir distribución por estados
-        document.add(new Paragraph("Distribución por Estado:", new Font(Font.FontFamily.HELVETICA, 14, Font.BOLD)));
+        document.add(new com.itextpdf.text.Paragraph("Distribución por Estado:",
+                new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 14, com.itextpdf.text.Font.BOLD)));
+
         for (Map.Entry<String, Long> entry : informe.distribucionEstados().entrySet()) {
-            document.add(new Paragraph(entry.getKey() + ": " + entry.getValue() + " reportes"));
+            document.add(new com.itextpdf.text.Paragraph(entry.getKey() + ": " + entry.getValue() + " reportes"));
         }
-        document.add(new Paragraph(" ")); // Espacio
+        document.add(new com.itextpdf.text.Paragraph(" ")); // Espacio
 
         // Crear tabla para los reportes
-        PdfPTable table = new PdfPTable(4); // 4 columnas
+        com.itextpdf.text.pdf.PdfPTable table = new com.itextpdf.text.pdf.PdfPTable(4); // 4 columnas
         table.setWidthPercentage(100);
 
         // Encabezados de la tabla
@@ -729,14 +953,12 @@ public class ReporteServicioImpl implements ReporteServicio {
 
         document.add(table);
 
-        // Agregar gráfico de distribución por estados (opcional, requiere library adicional)
-        // Esta parte necesitaría JFreeChart si quieres implementar gráficos
-
         // Cerrar el documento
         document.close();
 
         return baos.toByteArray();
     }
+
 
 
 
@@ -749,40 +971,42 @@ public class ReporteServicioImpl implements ReporteServicio {
         // Crear un ByteArrayOutputStream para almacenar el PDF
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-        // Crear el documento PDF
-        Document document = new Document(PageSize.A4);
-        PdfWriter.getInstance(document, baos);
+        // Crear el documento PDF - Usar el nombre completo para evitar ambigüedad
+        com.itextpdf.text.Document document = new com.itextpdf.text.Document(com.itextpdf.text.PageSize.A4);
+        com.itextpdf.text.pdf.PdfWriter.getInstance(document, baos);
 
         document.open();
 
         // Añadir título
-        Font titleFont = new Font(Font.FontFamily.HELVETICA, 18, Font.BOLD);
-        Paragraph title = new Paragraph("Informe de Reportes por Ubicación", titleFont);
-        title.setAlignment(Element.ALIGN_CENTER);
+        com.itextpdf.text.Font titleFont = new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 18, com.itextpdf.text.Font.BOLD);
+        com.itextpdf.text.Paragraph title = new com.itextpdf.text.Paragraph("Informe de Reportes por Ubicación", titleFont);
+        title.setAlignment(com.itextpdf.text.Element.ALIGN_CENTER);
         document.add(title);
-        document.add(new Paragraph(" ")); // Espacio
+        document.add(new com.itextpdf.text.Paragraph(" ")); // Espacio
 
         // Añadir información del informe
-        document.add(new Paragraph("Ubicación: Latitud: " + latitud + ", Longitud: " + longitud));
-        document.add(new Paragraph("Radio: " + radioKm + " km"));
+        document.add(new com.itextpdf.text.Paragraph("Ubicación: Latitud: " + latitud + ", Longitud: " + longitud));
+        document.add(new com.itextpdf.text.Paragraph("Radio: " + radioKm + " km"));
         if (fechaInicio != null) {
-            document.add(new Paragraph("Fecha Inicio: " + fechaInicio));
+            document.add(new com.itextpdf.text.Paragraph("Fecha Inicio: " + fechaInicio));
         }
         if (fechaFin != null) {
-            document.add(new Paragraph("Fecha Fin: " + fechaFin));
+            document.add(new com.itextpdf.text.Paragraph("Fecha Fin: " + fechaFin));
         }
-        document.add(new Paragraph("Total de Reportes: " + informe.totalReportes()));
-        document.add(new Paragraph(" ")); // Espacio
+        document.add(new com.itextpdf.text.Paragraph("Total de Reportes: " + informe.totalReportes()));
+        document.add(new com.itextpdf.text.Paragraph(" ")); // Espacio
 
         // Añadir estadísticas por categoría
-        document.add(new Paragraph("Distribución por Categoría:", new Font(Font.FontFamily.HELVETICA, 14, Font.BOLD)));
+        document.add(new com.itextpdf.text.Paragraph("Distribución por Categoría:",
+                new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 14, com.itextpdf.text.Font.BOLD)));
+
         for (Map.Entry<String, Long> entry : informe.reportesPorCategoria().entrySet()) {
-            document.add(new Paragraph(entry.getKey() + ": " + entry.getValue() + " reportes"));
+            document.add(new com.itextpdf.text.Paragraph(entry.getKey() + ": " + entry.getValue() + " reportes"));
         }
-        document.add(new Paragraph(" ")); // Espacio
+        document.add(new com.itextpdf.text.Paragraph(" ")); // Espacio
 
         // Crear tabla para los reportes
-        PdfPTable table = new PdfPTable(5); // 5 columnas
+        com.itextpdf.text.pdf.PdfPTable table = new com.itextpdf.text.pdf.PdfPTable(5); // 5 columnas
         table.setWidthPercentage(100);
 
         // Encabezados de la tabla
@@ -806,12 +1030,13 @@ public class ReporteServicioImpl implements ReporteServicio {
     }
 
     // Método auxiliar para añadir encabezados a la tabla
-    private void addTableHeader(PdfPTable table, String[] headers) {
+    private void addTableHeader(com.itextpdf.text.pdf.PdfPTable table, String[] headers) {
         for (String header : headers) {
-            PdfPCell cell = new PdfPCell();
-            cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+            com.itextpdf.text.pdf.PdfPCell cell = new com.itextpdf.text.pdf.PdfPCell();
+            cell.setBackgroundColor(com.itextpdf.text.BaseColor.LIGHT_GRAY);
             cell.setPadding(5);
-            cell.setPhrase(new Phrase(header, new Font(Font.FontFamily.HELVETICA, 12, Font.BOLD)));
+            cell.setPhrase(new com.itextpdf.text.Phrase(header,
+                    new com.itextpdf.text.Font(com.itextpdf.text.Font.FontFamily.HELVETICA, 12, com.itextpdf.text.Font.BOLD)));
             table.addCell(cell);
         }
     }
@@ -888,6 +1113,89 @@ public class ReporteServicioImpl implements ReporteServicio {
         reporte.getHistorial().add(historial);
 
         reporteRepo.save(reporte);
+    }
+
+    @Override
+    public List<ReporteDTO> listarReportesPorEmailUsuario(String emailUsuario) throws Exception {
+        System.out.println("Buscando reportes para el usuario con email: " + emailUsuario);
+
+        if (emailUsuario == null || emailUsuario.isBlank()) {
+            throw new Exception("Email de usuario inválido");
+        }
+
+        try {
+            // Primero, buscar el usuario por su email para obtener su ID
+            Optional<Usuario> usuario = usuarioRepo.findByEmail(emailUsuario);
+
+            if (usuario.isEmpty()) {
+                System.out.println("No se encontró ningún usuario con el email: " + emailUsuario);
+                throw new Exception("Usuario no encontrado con email: " + emailUsuario);
+            }
+
+            ObjectId idUsuario = usuario.get().getId();
+            System.out.println("ID del usuario encontrado: " + idUsuario);
+
+            // Usando el ID, buscar sus reportes
+            List<Reporte> reportes = reporteRepo.findByIdUsuario(idUsuario);
+            System.out.println("Reportes encontrados: " + reportes.size());
+
+            // Convertir a DTOs
+            return reportes.stream()
+                    .map(reporteMapper::toDto)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            System.out.println("Error al buscar reportes por email: " + e.getMessage());
+            e.printStackTrace();
+            throw new Exception("Error al buscar reportes: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Verifica si un usuario es propietario de un reporte
+     * @param idReporte ID del reporte a verificar
+     * @param emailUsuario Email del usuario a verificar
+     * @return true si el usuario es propietario del reporte, false en caso contrario
+     * @throws Exception si ocurre algún error
+     */
+    @Override
+    public boolean verificarPropietarioReporte(String idReporte, String emailUsuario) throws Exception {
+        System.out.println("Verificando propiedad del reporte: " + idReporte);
+        System.out.println("Email del usuario actual: " + emailUsuario);
+
+        if (!ObjectId.isValid(idReporte)) {
+            throw new Exception("ID de reporte inválido");
+        }
+
+        // Obtener el reporte
+        ObjectId reporteObjectId = new ObjectId(idReporte);
+        Reporte reporte = reporteRepo.findById(reporteObjectId)
+                .orElseThrow(() -> new Exception("Reporte no encontrado"));
+
+        // Obtener el ID del usuario del reporte
+        ObjectId idUsuarioReporte = reporte.getIdUsuario();
+        System.out.println("ID del usuario del reporte: " + idUsuarioReporte);
+
+        if (idUsuarioReporte == null) {
+            System.out.println("Reporte sin usuario asociado (anónimo)");
+            return false; // Reporte anónimo
+        }
+
+        // Buscar el usuario por su ID para obtener su email
+        Optional<Usuario> usuarioReporte = usuarioRepo.findById(idUsuarioReporte);
+        if (usuarioReporte.isEmpty()) {
+            System.out.println("No se encontró el usuario propietario del reporte con ID: " + idUsuarioReporte);
+            return false;
+        }
+
+        // Comparar el email del usuario del reporte con el email actual
+        String emailPropietario = usuarioReporte.get().getEmail();
+        System.out.println("Email del propietario del reporte: " + emailPropietario);
+        System.out.println("Email del usuario actual: " + emailUsuario);
+
+        boolean esPropietario = emailPropietario.equals(emailUsuario);
+        System.out.println("¿Es propietario? " + esPropietario);
+
+        return esPropietario;
     }
 
 
