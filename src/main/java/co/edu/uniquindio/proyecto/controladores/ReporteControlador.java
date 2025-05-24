@@ -310,9 +310,10 @@ public class ReporteControlador {
             )
             @Valid @RequestBody(required = true) CrearReporteAnonimoDTO dto) {
         try {
-            reporteServicio.crearReporteAnonimo(dto);
+            String idReporte = reporteServicio.crearReporteAnonimo(dto);
+            String mensajeRespuesta = "Reporte anónimo creado exitosamente, el ID es: " + idReporte;
             return ResponseEntity.ok()
-                    .body(new MensajeDTO<>(false, "Reporte anónimo creado"));
+                    .body(new MensajeDTO<>(false, mensajeRespuesta));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
                     .body(new MensajeDTO<>(true, e.getMessage()));

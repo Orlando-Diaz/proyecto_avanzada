@@ -48,7 +48,7 @@ public interface ReporteServicio {
 
     byte[] generarInformePorUbicacionPDF(Double latitud, Double longitud, Double radioKm, LocalDate fechaInicio, LocalDate fechaFin) throws Exception;
 
-    void crearReporteAnonimo(CrearReporteAnonimoDTO dto) throws Exception;
+    String crearReporteAnonimo(CrearReporteAnonimoDTO dto) throws Exception;
 
     void rechazarReporte(String idReporte, RechazarReporteDTO dto) throws Exception;
 

@@ -1135,7 +1135,7 @@ public class ReporteServicioImpl implements ReporteServicio {
      */
 
     @Override
-    public void crearReporteAnonimo(CrearReporteAnonimoDTO dto) throws Exception {
+    public String crearReporteAnonimo(CrearReporteAnonimoDTO dto) throws Exception {
         // Validaciones básicas
         if(dto.titulo().isBlank()) {
             throw new Exception("El título es obligatorio");
@@ -1147,7 +1147,12 @@ public class ReporteServicioImpl implements ReporteServicio {
 
         // Convertir DTO a documento
         Reporte reporte = reporteMapper.toDocumentFromAnonimo(dto);
-        reporteRepo.save(reporte);
+
+        // Guardar el reporte
+        Reporte reporteGuardado = reporteRepo.save(reporte);
+
+        // Devolver el ID del reporte creado
+        return reporteGuardado.getId().toString();
     }
 
 
