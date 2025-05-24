@@ -45,8 +45,10 @@ public class ReporteControlador {
                     required = true
             )
             @Valid @RequestBody(required = true) CrearReporteDTO crearReporteDTO) throws Exception {
-        reporteServicio.crearReporte(crearReporteDTO);
-        return ResponseEntity.ok().body(new MensajeDTO<>(false, "Reporte creado exitosamente"));
+
+        String idReporte = reporteServicio.crearReporte(crearReporteDTO);
+        String mensajeRespuesta = "Reporte creado exitosamente, el ID es: " + idReporte;
+        return ResponseEntity.ok().body(new MensajeDTO<>(false, mensajeRespuesta));
     }
 
     @Operation(summary = "Editar un reporte")

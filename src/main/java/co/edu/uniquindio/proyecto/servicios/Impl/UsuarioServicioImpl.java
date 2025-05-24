@@ -260,10 +260,6 @@ public class UsuarioServicioImpl implements UsuarioServicio {
         Usuario usuario = usuarioRepo.findByEmail(recuperarPasswordDTO.email())
                 .orElseThrow(() -> new UsuarioInexistente("ERROR. Usuario no encontrado"));
 
-        //Verificar estadoUsuario sea Activo
-        if (!usuario.getEstado().equals(EstadoUsuario.ACTIVO)) {
-            throw new EstadoCuentaInvalidoException("ERROR. Usuario con un estado invalido");
-        }
 
         //Validar que el codigo sea solicitado una vez cada 2 minutos
         if (usuario.getFechaCodigoValidacion() != null &&

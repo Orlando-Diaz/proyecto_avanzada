@@ -49,7 +49,7 @@ public class ReporteServicioImpl implements ReporteServicio {
     private final NotificacionServicio notificacionServicio;
 
     @Override
-    public void crearReporte(CrearReporteDTO crearReporteDTO) throws Exception {
+    public String crearReporte(CrearReporteDTO crearReporteDTO) throws Exception {
         // 1. Validar usuario
         if (!ObjectId.isValid(crearReporteDTO.idUsuario())) {
             throw new Exception("El ID del usuario es inválido");
@@ -87,7 +87,11 @@ public class ReporteServicioImpl implements ReporteServicio {
         reporte.setComentarios(new ArrayList<>());
         reporte.setHistorial(new ArrayList<>());
 
-        reporteRepo.save(reporte);
+        // Guardar el reporte
+        Reporte reporteGuardado = reporteRepo.save(reporte);
+
+        // Devolver el ID del reporte creado
+        return reporteGuardado.getId().toString();
     }
 
     @Override
