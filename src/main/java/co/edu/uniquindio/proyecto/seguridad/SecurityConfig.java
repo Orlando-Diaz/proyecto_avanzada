@@ -118,7 +118,8 @@ public class SecurityConfig {
 
         config.setAllowedOrigins(List.of(
                 "http://localhost:4200",           // Angular en desarrollo
-                "https://proyecto-avanzada.onrender.com/"  // Tu dominio en producción
+                "https://proyecto-avanzada.onrender.com/",  // Tu dominio en producción
+                "https://app-frontend-proyecto-uq-c82b8.web.app/"
         ));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
